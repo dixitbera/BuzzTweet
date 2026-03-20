@@ -228,6 +228,7 @@ function ProfilePostcard({ post, currentUserId, onPostUpdate, onPostDelete, onSh
   return (
     <>
       {/* Post Card */}
+      
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
         {/* Header */}
         <div className="flex items-center justify-between p-4 pb-3">

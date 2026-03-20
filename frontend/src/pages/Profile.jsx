@@ -285,6 +285,15 @@ function Profile({ toast }) {
           </div>
 
           {/* Posts Section */}
+          {data?.postcount < 1 && (
+            <div className="bg-gradient-to-r from-gray-50 to-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Grid className="w-6 h-6 text-gray-400" />
+              </div>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-700 mb-1">No Post Yet</h4>
+              <p className="text-xs sm:text-sm text-gray-500">You haven't created any posts. Start sharing your thoughts!</p>
+            </div>
+          )}
           {data?.postcount > 0 && (
             <>
               {/* Modern Header */}

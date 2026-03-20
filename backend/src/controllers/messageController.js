@@ -1,5 +1,6 @@
 import Message from "../models/Message.js";
 import mongoose from "mongoose";
+import MessageStatus from "../models/MessageStatus.js"; 
 // export const sendMessage = (req, res) => {
 //   const { message } = req.body;
 
@@ -83,7 +84,7 @@ export const getMessages = async (req, res) => {
 
 export const getMessagesuser = async (req, res) => {
     const {reciverid}=req.body;
-    console.log(reciverid) 
+    // console.log(reciverid) 
     const senderId = req.user.id;
     const receiverId = new mongoose.Types.ObjectId(reciverid);
     try { 
@@ -93,31 +94,80 @@ export const getMessagesuser = async (req, res) => {
                 { sender: receiverId, receiver: senderId },
             ],
         }).populate("sender", "username").populate("receiver", "username").sort({ timestamp: 1 });
-        console.log("Fetched messages for user:", messages);
-        res.json({ messages });
+        const messageStatus = await MessageStatus.findOne({ userId: senderId, partnerId: receiverId });
+        // console.log("Message status for user:", messageStatus);
+        // console.log("Fetched messages for user:", messages);
+        res.json({ messages,lastReadAt: messageStatus ? messageStatus.lastReadAt : null });
     } catch (error) {
         console.log(error)    
     }
   }
-export const InsertMessage=async (msg) => {
+export const InsertMessage = async (senderid, msg, receiverid) => {
   try {
-    console.log("Inserting message into database:", msg);
-    const senderid=new mongoose.Types.ObjectId(msg.sender._id);
-    const receiverid=new mongoose.Types.ObjectId(msg.receiver);
-    const newMessage = new Message({  
-      sender: senderid,
-      receiver: receiverid,
-      content: msg.content,
-      timestamp: msg.timestamp,
+    // console.log(senderid,"c",receiverid)
+    const currenttime=new Date();
+    const senderids = new mongoose.Types.ObjectId(senderid);
+    const receiverids = new mongoose.Types.ObjectId(receiverid);
+    const newMessage = new Message({
+      sender: senderids,
+      receiver: receiverids,
+      content: msg,
+      timestamp: currenttime,
     });
-    console.log("New message document:", newMessage);
-    const resu=await newMessage.save();
-    console.log("Message saved to database:", resu);
+    // console.log("New message document:", newMessage);
+    const resu = await newMessage.save();
+    // console.log("Message saved to database:", resu);
+    if (resu) {
+      return true;
+    }
+    return false;
   } catch (error) {
     console.log(error);
+    return false;
+  }
+};
+
+export const markMessagesAsSeen = async (req,res) => {
+  const { senderId } = req.body;
+  const userId = req.user.id;
+  console.log("Marking messages as seen from sender:", senderId, "to receiver:", userId);
+  try{  
+    const currenttime = new Date();
+    const result = await MessageStatus.findOneAndUpdate(
+      { userId: userId, partnerId: senderId },
+      { lastReadAt: currenttime },);
+      const insertstatus=undefined;
+      if(!result){
+         insertstatus=await MessageStatus.insertOne({
+          userId: userId,
+          partnerId: senderId,
+          lastReadAt:currenttime});
+          // console.log("Message status inserted:", insertstatus);
+      }
+      if(!result && !insertstatus){
+        //console.log("Failed to update or insert message status");
+        return res.status(500).json({ error: "Failed to update message status" });
+      }
+      res.status(200).json({ message: "Messages marked as seen" ,lastReadAt:currenttime});
+   // console.log("Message status updated:", result);
+  } catch(error){
+    res.status(500).json({ error: "Failed to mark messages as seen" });
   }
 }
 
+export const sendMessage=async (req,res) => {
+    const { content, receiver } = req.body;
+    const userID=req.user.id;
+    try {
+      const inser = InsertMessage(userID, content, receiver);
+      if(inser){
+         return res.status(200).json({message:"Send Successfully"})
+      }
+      return res.status(400).json({message:"Something Wen't Wrong"})
+    } catch (error) {
+      return  res.status(500).json({message:"Internal Server Error"})
+    }
+}
 // const insert = await Message.insertMany([
     //   {
     //     sender: userId,

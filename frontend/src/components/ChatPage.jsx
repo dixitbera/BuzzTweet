@@ -1,32 +1,51 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Smile, Image, Paperclip, Mic, ArrowLeft, MoreVertical } from "lucide-react";
 
-function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, socket }) {
+function ChatPage({
+  messages = [],
+  currentUserId,
+  selectedUser,
+  onSendMessage,
+  socket,
+  lastReadAt
+,
+}) {
   const messagesEndRef = useRef(null);
   const [messageText, setMessageText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Common emojis for quick selection
-  const quickEmojis = ["😊", "😂", "❤️", "👍", "🎉", "🔥", "💯", "🙌", "😢", "😮"];
+  const quickEmojis = [
+    "😊",
+    "😂",
+    "❤️",
+    "👍",
+    "🎉",
+    "🔥",
+    "💯",
+    "🙌",
+    "😢",
+    "😮",
+  ];
   // useEffect(() => {
   //   console.log(socket);
   // }, []);
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Format timestamp for display
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   // Check if message is from current user
   const isCurrentUser = (msg) => {
     // Handle both string and object sender formats
-    const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender;
+    const senderId =
+      typeof msg.sender === "object" ? msg.sender._id : msg.sender;
     return senderId === currentUserId;
   };
 
@@ -42,16 +61,16 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
     });
     return groups;
   };
-  
+
   // Handle sending message
   const handleSend = () => {
     if (messageText.trim() === "") return;
-    
+
     // Use the onSendMessage callback if provided
     if (onSendMessage) {
       onSendMessage(messageText);
     }
-    
+
     // Clear the input
     setMessageText("");
     setShowEmojiPicker(false);
@@ -83,12 +102,14 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
               {selectedUser.username?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-800">{selectedUser.username}</h3>
+              <h3 className="font-semibold text-gray-800">
+                {selectedUser.username}
+              </h3>
               <p className="text-xs text-green-500">Online</p>
             </div>
           </div>
         )}
-        
+
         <div className="flex-1 flex flex-col items-center justify-center p-8">
           <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 flex items-center justify-center">
@@ -106,8 +127,12 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No messages yet</h3>
-            <p className="text-gray-500">Start a conversation by sending a message</p>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No messages yet
+            </h3>
+            <p className="text-gray-500">
+              Start a conversation by sending a message
+            </p>
           </div>
         </div>
 
@@ -117,7 +142,7 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
             <button className="text-gray-500 hover:text-indigo-600 transition-colors p-1">
               <Paperclip size={20} />
             </button>
-            <button 
+            <button
               className="text-gray-500 hover:text-indigo-600 transition-colors p-1"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             >
@@ -142,7 +167,7 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
               <Send size={18} />
             </button>
           </div>
-          
+
           {/* Emoji Picker */}
           {showEmojiPicker && (
             <div className="absolute bottom-20 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-10">
@@ -173,7 +198,9 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
             {selectedUser.username?.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-800">{selectedUser.username}</h3>
+            <h3 className="font-semibold text-gray-800">
+              {selectedUser.username}
+            </h3>
             <p className="text-xs text-green-500">Online</p>
           </div>
           <button className="text-gray-500 hover:text-indigo-600 transition-colors p-2">
@@ -190,20 +217,21 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
             <div className="flex items-center justify-center my-4">
               <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
                 {new Date(date).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric'
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
                 })}
               </div>
             </div>
 
             {/* Messages for this date */}
             {dateMessages.map((msg, index) => {
-              console.log(msg,"INDEX",index)
               const isSender = isCurrentUser(msg);
-              const showAvatar = index === 0 || 
+              const showAvatar =
+                index === 0 ||
                 dateMessages[index - 1].sender._id !== msg.sender._id;
-
+              // Robust seen logic: derive, don't mutate
+              const isSeen = lastReadAt && new Date(msg.timestamp) <= new Date(lastReadAt);
               return (
                 <div
                   key={msg._id}
@@ -259,7 +287,7 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
                       <span>{formatTimestamp(msg.timestamp)}</span>
                       {isSender && (
                         <span className="ml-1">
-                          {msg.seen ? (
+                          {isSeen ? (
                             <span className="text-blue-400">✓✓</span>
                           ) : (
                             <span>✓</span>
@@ -295,7 +323,7 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
           <button className="text-gray-500 hover:text-indigo-600 transition-colors p-1">
             <Paperclip size={20} />
           </button>
-          <button 
+          <button
             className="text-gray-500 hover:text-indigo-600 transition-colors p-1"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
@@ -320,7 +348,7 @@ function ChatPage({ messages = [], currentUserId, selectedUser, onSendMessage, s
             <Send size={18} />
           </button>
         </div>
-        
+
         {/* Emoji Picker */}
         {showEmojiPicker && (
           <div className="absolute bottom-20 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-3 z-10">

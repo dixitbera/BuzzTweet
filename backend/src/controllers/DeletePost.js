@@ -1,6 +1,8 @@
 import Post from "../models/Post.js";
 import fs from "fs/promises";
-import path from "path";
+import path from "path";4
+import User from "../models/User.js"
+import { Console } from "console";
 
 export const DeletePost = async (req, res) => {
   try {
@@ -24,6 +26,11 @@ export const DeletePost = async (req, res) => {
         console.log("Image not found or already deleted");
       }
     }
+      console.log(req.user.id)
+    const postcountde = await User.findByIdAndUpdate(req.user.id, {
+      $inc: { postcount: -1 },
+    });
+    console.log("aDSDF"+postcountde)
     res.status(200).json({ message: "Post deleted successfully", flag: true });
   } catch (error) {
     console.error("Error deleting post:", error);

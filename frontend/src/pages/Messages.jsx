@@ -1,27 +1,50 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import { Search, Send, Image, Smile, Paperclip, MoreVertical, Phone, Video, ArrowLeft } from "lucide-react";
 // web socket
+const notificationAudio = new Audio("/notification.mp3");
 import { io } from "socket.io-client";
 // import { useEffect } from "react";
 import axios from "axios";
 import ChatPage from "../components/ChatPage.jsx";
 function Messages() {
-  const [socket, setSocket] = useState(null);
+  // const [socket, setSocket] = useState(null);
+  const socket = useRef(null);
   const [currentSender, setCurrentSender] = useState(null);
   const [selectedChat, setSelectedChat] = useState([]);
-  const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [conversionid,setconversionid]=useState();
   const [selectedUser,setSelectedUser]=useState();
   const selectedUserRef = useRef(null);
+  const [lastReadAt, setLastReadAt] = useState(null);
+  // Monotonic update for lastReadAt
+  const updateLastReadAt = (newTimestamp) => {
+    setLastReadAt((prev) => {
+      if (!prev || (newTimestamp && new Date(newTimestamp) > new Date(prev))) {
+        return newTimestamp;
+      }
+      return prev;
+    });
+  };
+  const [errorMessage, setErrorMessage] = useState("");
   
   // Keep ref in sync with state
   useEffect(() => {
     selectedUserRef.current = selectedUser;
   }, [selectedUser]);
-  
-  const [currentUserId, setCurrentUserId] = useState(null);
+  useEffect(() => {
+    if (selectedUser) {
+      handleMessageSeen(selectedUser.userId);
+    }
+  }, [selectedUser]);
+  function seensocket(senderID){
+    if (socket.current) {
+      socket.current.emit("sendseen", {
+        receiver: currentUserId.current,
+        sender: senderID,
+      });
+    }
+  }
+  const currentUserId=useRef(null);
   useEffect(() => {
     // Fetch current user info on component mount
     const fetchCurrentUser = async () => {
@@ -29,10 +52,11 @@ function Messages() {
         const response = await axios.get("http://localhost:5000/check-auth", {
           withCredentials: true,
         });
-        setCurrentUserId(response.data.id);
-        // console.log("Current User ID:", response.data);
+        console.log(response)
+        currentUserId.current = response.data.id;
+        // ...existing code...
       } catch (error) {
-        console.error("Error fetching current user:", error);
+        // ...existing code...
       }
     };
     fetchCurrentUser();
@@ -41,57 +65,72 @@ function Messages() {
     const newSocket = io("http://localhost:5000", {
       withCredentials: true,
     });
-    setSocket(newSocket);
+    socket.current = newSocket;
     newSocket.on("connect", () => {
-      console.log("Connected to socket server:", newSocket.id);
-    }); 
-    
-    // Listen for incoming messages from the server
+      // ...existing code...
+    });
     newSocket.on("message", (msg) => {
-      console.log("Received message:", msg);
-      
-      // Get current selected user from ref
+      if (!selectedUser || msg.sender._id !== selectedUser.userId) {
+        // Play notification sound
+        try {
+          notificationAudio.currentTime = 0;
+          notificationAudio.play();
+        } catch (e) {
+          // Ignore play errors
+        }
+      }
       const currentUser = selectedUserRef.current;
-      
-      // Check if message is valid and from the currently selected user
       if (msg && currentUser) {
-        console.log("Message sender ID:", msg.receiver);  
-        console.log("Currently selected user ID:", currentUser.userId);
-        console.log(currentUser, " ", msg.sender)
-        if (msg.sender._id === currentUser?.userId) {
-          console.log(
-            "Message is from the currently selected user. Updating chat.",
+        const find = conversationsRef.current.find(
+          (conv) => conv.userId === msg.sender._id,
+        );
+        if (find) {
+          setConversations((prev) =>
+            prev.map((conv) =>
+              conv.userId === msg.sender._id
+                ? { ...conv, lastMessage: msg.content, lastTime: msg.timestamp }
+                : conv,
+            ),
           );
+        }
+        if (msg.sender._id === currentUser?.userId) {
+          if (socket.current) {
+            seensocket(msg.sender._id);
+          }
           setSelectedChat((prev) => [...(prev || []), msg]);
-            const find = conversations.find(conv => conv.userId === msg.sender._id);
-            if(find){
-              setConversations(prev => prev.map(conv => conv.userId === msg.sender._id ? { ...conv, lastMessage: msg.content, lastTime: msg.timestamp } : conv));
-            }
         }
       }
     });
-
-    // return () => {
-    //   newSocket.disconnect();
-    // }; 
-  }, []); // Empty dependency - only run once on mount
-useEffect(() => {
+    // const[loading ,setLoading] = useState(false);
+    newSocket.on("seenreceipt", (data) => {
+      if (data.sender === currentUserId.current) {
+        updateLastReadAt(data.timestamp);
+      }
+      // handleMessageSeen(data.sender);
+    });
+    // Cleanup on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+  const [conversations, setConversations] = useState([]);
+  const conversationsRef = useRef([]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+  useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/messages", { withCredentials: true });
-        console.log("Fetched messages:", response.data);
-        setMessages(response.data.messages);
+        const response = await axios.get("http://localhost:5000/api/messages", {
+          withCredentials: true,
+        });
         setConversations(response.data.messages);
       } catch (error) {
-        console.error("Error fetching messages:", error);
+        setErrorMessage("Failed to fetch messages. Please try again later.");
       }
     };
     fetchMessages();
   }, []);
-  const [conversations,setConversations] = useState([]);
-
-  // Mock messages for selected chat
-  const [messages, setMessages] = useState([]);
 
   const formatTime = (date) => {
     const now = new Date();
@@ -121,59 +160,81 @@ useEffect(() => {
   //   setMessageText("");
   // };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.username.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = useMemo(
+    () =>
+      conversations
+        .filter((conv) =>
+          conv.username.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
+        .sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime)),
+    [conversations, searchQuery],
   );
   const handleconversion = async (id, username) => {
-    console.log("Fetching chat for user ID:", id);
     try {
       const chat = await axios.post("http://localhost:5000/api/messages/user", { reciverid: id }, { withCredentials: true });
-      console.log("Fetched chat:", chat.data.messages);
-      
-      // Set the selected user with userId
+      updateLastReadAt(chat.data.lastReadAt);
       setSelectedUser({ userId: id, username: username });
-      
-      // Set the messages for the selected chat
       setSelectedChat(chat.data.messages || []);
     } catch (error) {
-      console.log(error);
+      setErrorMessage("Failed to load chat. Please try again later.");
     }
   };
+  const handleMessageSeen = async (selectedUser) => {
+    try {
+      if (selectedUser) {
+        await axios.post(
+          "http://localhost:5000/api/messages/seen",
+          {
+            senderId: selectedUser,
+          },
+          { withCredentials: true },
+        );
+        // Optionally, emit seen socket event here if needed
+        seensocket(selectedUser);
+      }
+    } catch (error) {
+      setErrorMessage("Failed to mark messages as seen. Please try again later.");
+    }
+  };
+
 
   // Handle sending a message
   const handleSendMessage = async (messageText) => {
     if (!messageText.trim() || !selectedUser) return;
-    
     const newMessage = {
       _id: Date.now().toString(),
       content: messageText,
-      sender: { _id: currentUserId, username: "You" },
+      sender: { _id: currentUserId.current, username: "You" },
       receiver: { _id: selectedUser.userId, username: selectedUser.username },
       timestamp: new Date().toISOString(),
       seen: false,
     };
-    // set this msg in the setconversations to update the last message and time
-      setConversations(prev => prev.map(conv => conv.userId === selectedUser.userId ? { ...conv, lastMessage: messageText, lastTime: newMessage.timestamp } : conv));
-    // Add message to the UI immediately
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.userId === selectedUser.userId
+          ? {
+              ...conv,
+              lastMessage: messageText,
+              lastTime: newMessage.timestamp,
+            }
+          : conv,
+      ),
+    );
     setSelectedChat((prev) => [...(prev || []), newMessage]);
-
-    // Emit via socket - backend expects receiver as userId string
-    if (socket) {
-      socket.emit("sendMessage", {
+    if (socket.current) {
+      socket.current.emit("sendMessage", {
         content: messageText,
-        receiver: selectedUser.userId, // Backend uses this in hasmap
+        receiver: selectedUser.userId,
         timestamp: new Date().toISOString(),
       });
     }
-
-    // Also send via API
     try {
       await axios.post("http://localhost:5000/api/send", {
         content: messageText,
         receiver: selectedUser.userId,
       }, { withCredentials: true });
     } catch (error) {
-      console.error("Error sending message:", error);
+      setErrorMessage("Failed to send message. Please try again later.");
     }
   };
 
@@ -181,6 +242,11 @@ useEffect(() => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50 md:ml-[260px] pt-16">
+        {errorMessage && (
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-2 text-center">
+            {errorMessage}
+          </div>
+        )}
         <div className="max-w-6xl mx-auto h-[calc(100vh-64px)] flex bg-white shadow-lg rounded-lg overflow-hidden m-4">
           {/* Conversations List */}
           <div
@@ -250,17 +316,18 @@ useEffect(() => {
           </div>
           {/* Chat Area */}
           {selectedUser ? (
-            <ChatPage
-              messages={selectedChat}
-              currentUserId={currentUserId}
-              socket={socket}
-              selectedUser={selectedUser}
-              onSendMessage={handleSendMessage}
-            />
+              <ChatPage
+                messages={selectedChat}
+                currentUserId={currentUserId.current}
+                socket={socket}
+                selectedUser={selectedUser}
+                onSendMessage={handleSendMessage}
+                lastReadAt={lastReadAt}
+              />
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <p className="text-gray-500">
-                Select a conversation to start chatting
+                Select a conversation to start chatting 
               </p>
             </div>
           )}

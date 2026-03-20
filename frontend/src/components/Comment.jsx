@@ -82,7 +82,7 @@ function Comment({ comm }) {
         </div>
 
         {/* Like Button - Below comment on left */}
-        <button
+        {/* <button
           disabled={loading}
           onClick={handlecommentLike}
           className={`flex items-center gap-1.5 mt-1.5 ml-1 text-xs font-semibold transition-all duration-200 ${
@@ -99,7 +99,7 @@ function Comment({ comm }) {
             )}
           </span>
           <span className={comentliked ? "font-bold" : ""}>{likecount}</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Like Count on Right Side - Alternative Display */}

@@ -7,6 +7,7 @@ import Home from "./pages/Home.jsx";
 import Post from "./pages/Post.jsx";
 import Profile from "./pages/Profile.jsx";
 import Messages from "./pages/Messages.jsx";
+import ProfileOfotheruser from "./pages/ProfileOfotheruser.jsx";
 import { ToastProvider, useToast } from "./components/ToastContainer.jsx";
 
 function AppContent() {
@@ -33,9 +34,16 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home islogin={isLoggedIn} toast={toast} />} />
         <Route path="/login" element={<Login islogin={isLoggedIn} />} />
-        <Route path="/post" element={<Post islogin={isLoggedIn} id={id} toast={toast} />} />
+        <Route
+          path="/post"
+          element={<Post islogin={isLoggedIn} id={id} toast={toast} />}
+        />
         <Route path="/register" element={<Register islogin={isLoggedIn} />} />
         <Route path="/profile" element={<Profile toast={toast} />} />
+        <Route
+          path="/u/:username"
+          element={<ProfileOfotheruser />}
+        />
         <Route path="/messages" element={<Messages />} />
         {/* <Route path="/profile/setting" element={<Profilesetting />} /> */}
       </Routes>

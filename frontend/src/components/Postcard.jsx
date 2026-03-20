@@ -110,17 +110,167 @@ function PostCard({ post, currentUserId }) {
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
   };
+  const timerRef = useRef(null);
+  const cache = useRef({});
+  const [profile,setProfile]=useState(null);
+  const [showCard, setShowCard] = useState(false);
+  const authorRef = useRef(null);
+  const [cardPosition, setCardPosition] = useState({ top: 0, left: 0 });
+
+  // Calculate card position
+  useEffect(() => {
+    if (showCard && authorRef.current) {
+      const rect = authorRef.current.getBoundingClientRect();
+      setCardPosition({
+        top: rect.bottom + 12,
+        left: rect.left,
+      });
+    }
+  }, [showCard]);
+
+  const handleMouseEnter = (id) => {
+    timerRef.current = setTimeout(async () => {
+      console.log("FetchProfile 300Ms ")
+      console.log(post)
+      setShowCard(true);
+      if (cache.current[id]) {
+        setProfile(cache.current[id]);
+        console.log("cache", cache.current[id]);
+        return
+      }
+      const data = await fetchproifle(id);  
+      console.log("api",data)
+       cache.current[id] = data;
+       setProfile(data);
+      // fetchProfile(userId); // only fires if user hovers 300ms+
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(timerRef.current);
+    setShowCard(false)
+    setProfile(null) // cursor left before 300ms → no API call
+  };
+  const fetchproifle=async (UserID) => {
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/user/preview",
+          { author: UserID },
+            {withCredentials: true,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+       return response.data;
+      } catch (e) {
+        console.log(e);
+        return -1;
+      }
+  }
+  // Profile Preview Card Component
+  const ProfilePreviewCard = ({ profile }) => {
+    if (!profile)
+      return (
+        <div
+          style={{
+            position: "fixed",
+            top: cardPosition.top,
+            left: cardPosition.left,
+            zIndex: 1050,
+            width: "260px",
+            boxShadow: "0 12px 32px rgba(60,60,90,0.15)",
+            borderRadius: "18px",
+            background: "#fff",
+            border: "1.5px solid #e5e7eb",
+            padding: "16px",
+          }}
+          className="animate-pulse"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-11 h-11 rounded-full bg-gray-100 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 bg-gray-100 rounded animate-pulse w-24" />
+              <div className="h-2 bg-gray-100 rounded animate-pulse w-16" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />
+            ))}
+          </div>
+          <div className="h-7 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+      );
+    return (
+      <div
+        style={{
+          position: "fixed",
+          top: cardPosition.top,
+          left: cardPosition.left,
+          zIndex: 1050,
+          width: "260px",
+          boxShadow: "0 12px 32px rgba(60,60,90,0.15)",
+          borderRadius: "18px",
+          background: "#fff",
+          border: "1.5px solid #e5e7eb",
+          padding: "16px",
+        }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-semibold text-white text-base flex-shrink-0 shadow-md">
+            {profile.username[0].toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900 leading-tight">
+              {profile.username}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">@{profile.username}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 divide-x divide-gray-100 border-y border-gray-100 mb-4">
+          <div className="py-2 text-center">
+            <p className="text-sm font-semibold text-gray-900">
+              {profile.postcount}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">posts</p>
+          </div>
+          <div className="py-2 text-center">
+            <p className="text-sm font-semibold text-gray-900">
+              {profile.followers}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">followers</p>
+          </div>
+          <div className="py-2 text-center">
+            <p className="text-sm font-semibold text-gray-900">
+              {profile.following}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">following</p>
+          </div>
+        </div>
+        <button className="w-full text-xs font-medium py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 transition-colors shadow-sm">
+          Follow
+        </button>
+      </div>
+    );
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-sm">
+      <div className="flex items-center justify-between p-4 pb-3 relative">
+        <div
+          className="flex items-center gap-3 cursor-pointer group"
+          onMouseEnter={() => handleMouseEnter(post.author._id)}
+          onMouseLeave={handleMouseLeave}
+          ref={authorRef}
+        >
+          {showCard && <ProfilePreviewCard profile={profile} />}
+          <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-md border-2 border-white">
             {post.author?.username[0].toUpperCase() || "U"}
           </div>
           <div>
-            <p className="font-semibold text-gray-800 text-sm sm:text-base">{post.author?.username}</p>
+            <p className="font-semibold text-gray-800 text-sm sm:text-base">
+              {post.author?.username}
+            </p>
             <p className="text-xs text-gray-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatDate(post.PostAt)}
@@ -171,7 +321,9 @@ function PostCard({ post, currentUserId }) {
             setShowCommentBox(!showCommentBox);
           }}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all duration-200 text-sm ${
-            showCommentBox ? "text-indigo-600 bg-indigo-50" : "text-gray-500 hover:bg-gray-100"
+            showCommentBox
+              ? "text-indigo-600 bg-indigo-50"
+              : "text-gray-500 hover:bg-gray-100"
           }`}
         >
           <MessageCircle className="w-5 h-5" />
@@ -186,7 +338,9 @@ function PostCard({ post, currentUserId }) {
             {/* Comments List */}
             <div className="max-h-80 overflow-y-auto space-y-2 scrollbar-hide">
               {comment.length === 0 && (
-                <p className="text-center text-sm text-gray-400 py-2">No comments yet</p>
+                <p className="text-center text-sm text-gray-400 py-2">
+                  No comments yet
+                </p>
               )}
               {comment.map((c) => (
                 <Comment key={c._id} comm={c} />

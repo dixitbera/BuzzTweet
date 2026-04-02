@@ -3,7 +3,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { HeartFilled, HeartOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import { Link } from "react-router-dom";
 function Comment({ comm }) {
   const navigate = useNavigate();
   const [com, setcom] = useState(comm);
@@ -66,7 +66,10 @@ function Comment({ comm }) {
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer">
-                {com?.userid?.username}
+                <Link to={`/u/${com?.userid?.username}`}>
+                  {com?.userid?.username}
+                </Link>
+                
               </span>
               <span className="text-xs text-gray-400">·</span>
               <span className="text-xs text-gray-400 font-medium">
@@ -104,9 +107,13 @@ function Comment({ comm }) {
 
       {/* Like Count on Right Side - Alternative Display */}
       <div className="flex-shrink-0 flex items-start pt-1">
-        <div className={`flex flex-col items-center gap-0.5 transition-colors ${
-          comentliked ? "text-red-500" : "text-gray-300 group-hover:text-gray-400"
-        }`}>
+        <div
+          className={`flex flex-col items-center gap-0.5 transition-colors ${
+            comentliked
+              ? "text-red-500"
+              : "text-gray-300 group-hover:text-gray-400"
+          }`}
+        >
           <button
             disabled={loading}
             onClick={handlecommentLike}

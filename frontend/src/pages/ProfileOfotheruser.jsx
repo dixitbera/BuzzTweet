@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import PostCard from "../components/Postcard.jsx";
+import ProfilePostcard from "../components/ProfilePostcard.jsx";
 import {
   ArrowLeft,
   Clock,
@@ -12,7 +13,10 @@ import {
   UserPlus,
   Users,
   UserX,
+  Trash2,
 } from "lucide-react";
+import Alert from "../components/Alert.jsx";
+import ModalWrapper from "../components/ModalWrapper.jsx";
 
 function ProfileOfotheruser() {
   const navigate = useNavigate();
@@ -29,10 +33,19 @@ function ProfileOfotheruser() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastConfig, setToastConfig] = useState({ type: "", message: "" });
 
   const loaderRef = useRef(null);
 
-  async function fetchPost(nextCursor = undefined, targetUsername = username, ignore = false) {
+  async function fetchPost(
+    nextCursor = undefined,
+    targetUsername = username,
+    ignore = false,
+  ) {
     if (loadingPosts) return;
     if (nextCursor && !hasmore) return;
     if (profileNotFound) return;
@@ -46,7 +59,7 @@ function ProfileOfotheruser() {
           params: { cursor: nextCursor },
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       const { dataf: newPosts = [], hasmore: more = false, cursorb } = res.data;
@@ -82,7 +95,7 @@ function ProfileOfotheruser() {
     try {
       const response = await axios.get(
         `http://localhost:5000/api/u/${targetUsername}/follow-status`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (ignore) return;
@@ -113,7 +126,7 @@ function ProfileOfotheruser() {
       try {
         const profileResponse = await axios.get(
           `http://localhost:5000/api/u/${username}`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         if (ignore) return;
@@ -126,7 +139,8 @@ function ProfileOfotheruser() {
             withCredentials: true,
           });
           if (!ignore && authRes?.data?.id) {
-            ownProfile = authRes.data.id.toString() === profileData?._id?.toString();
+            ownProfile =
+              authRes.data.id.toString() === profileData?._id?.toString();
             setIsOwnProfile(ownProfile);
           }
         } catch {
@@ -176,7 +190,7 @@ function ProfileOfotheruser() {
           fetchPost(cursor);
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     if (loaderRef.current) {
@@ -185,6 +199,70 @@ function ProfileOfotheruser() {
 
     return () => observer.disconnect();
   }, [cursor, data, hasmore, loadingPosts, profileLoading, profileNotFound]);
+
+  const handleShowToast = (type, message) => {
+    setToastConfig({ type, message });
+    setShowToast(true);
+  };
+
+  const handlePostUpdate = (updatedPost) => {
+    setPosts((prev) =>
+      prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
+    );
+  };
+
+  const handlePostDelete = (postId) => {
+    setPosts((prev) => prev.filter((post) => post._id !== postId));
+    setData((prev) => ({
+      ...prev,
+      postcount: Math.max(0, (prev.postcount || 1) - 1),
+    }));
+  };
+
+  const handleDeleteRequest = (postId) => {
+    setPostToDelete(postId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await axios.delete("http://localhost:5000/post/delete", {
+        data: { postid: postToDelete },
+        withCredentials: true,
+      });
+      if (res.data?.flag) {
+        handleShowToast("success", "Post deleted successfully!");
+        setPosts((prev) => {
+          const newPosts = prev.filter((post) => {
+            const postId = post._id?.toString() || post._id;
+            const deleteId = postToDelete?.toString() || postToDelete;
+            return postId !== deleteId;
+          });
+          return newPosts;
+        });
+        setData((prev) => ({
+          ...prev,
+          postcount: Math.max(0, (prev.postcount || 1) - 1),
+        }));
+      } else {
+        handleShowToast(
+          "error",
+          res.data?.message || "Failed to delete post"
+        );
+      }
+    } catch (error) {
+      handleShowToast(
+        "error",
+        "Failed to delete post. Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setPostToDelete(null);
+    }
+  };
 
   async function handleFollowToggle() {
     if (!data || followLoading || isOwnProfile) return;
@@ -197,7 +275,7 @@ function ProfileOfotheruser() {
       const response = await axios.post(
         `http://localhost:5000/api/u/${username}/follow`,
         { follow: nextFollowState },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       const nextStatus = Boolean(response?.data?.isFollowing);
@@ -259,10 +337,15 @@ function ProfileOfotheruser() {
             <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-500 mx-auto flex items-center justify-center mb-4">
               <UserX className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">404</h2>
-            <p className="text-lg font-semibold text-gray-700 mt-1">User Not Found</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              404
+            </h2>
+            <p className="text-lg font-semibold text-gray-700 mt-1">
+              User Not Found
+            </p>
             <p className="text-sm text-gray-500 mt-2">
-              We could not find @{username}. The account may not exist or was changed.
+              We could not find @{username}. The account may not exist or was
+              changed.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -309,6 +392,59 @@ function ProfileOfotheruser() {
   return (
     <>
       <Navbar />
+      {showToast && (
+        <Alert
+          type={toastConfig.type}
+          message={toastConfig.message}
+          onClose={() => setShowToast(false)}
+          duration={3000}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ModalWrapper showf={setShowDeleteConfirm}>
+          <div className="p-6 max-w-sm mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Delete Post?
+              </h3>
+              <p className="text-gray-500 mb-6">
+                This action cannot be undone. Your post will be permanently
+                deleted.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setPostToDelete(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeletePost}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalWrapper>
+      )}
+
       <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-3 sm:px-4 md:ml-[260px]">
         <div className="max-w-2xl mx-auto space-y-5 sm:space-y-6">
           <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -348,15 +484,17 @@ function ProfileOfotheruser() {
                       {followLoading
                         ? "Updating"
                         : isFollowing
-                        ? "Following"
-                        : "Follow"}
+                          ? "Following"
+                          : "Follow"}
                     </button>
                   )}
                 </div>
 
                 {data?.bio && (
                   <div className="mt-2">
-                    <p className="text-xs sm:text-sm text-gray-500">{data.bio}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {data.bio}
+                    </p>
                   </div>
                 )}
 
@@ -366,26 +504,34 @@ function ProfileOfotheruser() {
                     <span className="font-semibold text-sm sm:text-base">
                       {data?.postcount || 0}
                     </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">posts</span>
+                    <span className="text-gray-500 text-xs sm:text-sm">
+                      posts
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <Users className="w-4 h-4 text-pink-500" />
                     <span className="font-semibold text-sm sm:text-base">
                       {data?.followers || 0}
                     </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">followers</span>
+                    <span className="text-gray-500 text-xs sm:text-sm">
+                      followers
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     <UserPlus className="w-4 h-4 text-green-500" />
                     <span className="font-semibold text-sm sm:text-base">
                       {data?.following || 0}
                     </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">following</span>
+                    <span className="text-gray-500 text-xs sm:text-sm">
+                      following
+                    </span>
                   </div>
                 </div>
 
                 {profileError && (
-                  <p className="mt-3 text-xs sm:text-sm text-red-500">{profileError}</p>
+                  <p className="mt-3 text-xs sm:text-sm text-red-500">
+                    {profileError}
+                  </p>
                 )}
               </div>
             </div>
@@ -399,7 +545,9 @@ function ProfileOfotheruser() {
               <h4 className="text-base sm:text-lg font-semibold text-gray-700 mb-1">
                 No Post Found
               </h4>
-              <p className="text-xs sm:text-sm text-gray-500">This user has not posted yet.</p>
+              <p className="text-xs sm:text-sm text-gray-500">
+                This user has not posted yet.
+              </p>
             </div>
           )}
 
@@ -411,8 +559,12 @@ function ProfileOfotheruser() {
                     <Grid className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-gray-800">Posts</h3>
-                    <p className="text-xs text-gray-500">{data?.postcount || 0} total posts</p>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-800">
+                      Posts
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      {data?.postcount || 0} total posts
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100 w-fit mx-auto sm:mx-0">
@@ -420,21 +572,41 @@ function ProfileOfotheruser() {
                   <span>Recent first</span>
                 </div>
               </div>
-
+              
               <div className="space-y-4">
-                {posts.map((post, index) => (
-                  <div
-                    key={post._id}
-                    className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <PostCard post={post} />
-                  </div>
-                ))}
+                {isOwnProfile
+                  ? posts.map((post, index) => (
+                      <div
+                        key={post._id}
+                        className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <ProfilePostcard
+                          post={post}
+                          currentUserId={data?._id}
+                          onPostUpdate={handlePostUpdate}
+                          onPostDelete={handlePostDelete}
+                          onShowToast={handleShowToast}
+                          onDeleteRequest={handleDeleteRequest}
+                        />
+                      </div>
+                    ))
+                  : posts.map((post, index) => (
+                      <div
+                        key={post._id}
+                        className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <PostCard post={post} IsHoveCard={false} />
+                      </div>
+                    ))}
               </div>
 
               {hasmore && (
-                <div ref={loaderRef} className="h-16 flex items-center justify-center">
+                <div
+                  ref={loaderRef}
+                  className="h-16 flex items-center justify-center"
+                >
                   <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
@@ -447,7 +619,9 @@ function ProfileOfotheruser() {
                   <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-1">
                     You are all caught up
                   </h4>
-                  <p className="text-xs sm:text-sm text-gray-500">No more posts to show</p>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    No more posts to show
+                  </p>
                 </div>
               )}
             </>

@@ -184,7 +184,10 @@ function Post({ islogin, id, toast }) {
             <div className="border-2 border-gray-100 rounded-xl p-4 bg-white focus-within:border-gray-300 focus-within:ring-2 focus-within:ring-gray-100 transition-all">
               <EditorContent editor={editor} />
               {previewUrl && (
-                <div style={{ marginTop: "10px" }} className="relative inline-block">
+                <div
+                  style={{ marginTop: "10px" }}
+                  className="relative inline-block"
+                >
                   <img
                     src={previewUrl}
                     alt="Preview"
@@ -194,8 +197,18 @@ function Post({ islogin, id, toast }) {
                     onClick={removeImage}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -257,8 +270,8 @@ function Post({ islogin, id, toast }) {
                     count > MAX_CHARS
                       ? "text-red-500"
                       : count > MAX_CHARS * 0.8
-                      ? "text-yellow-500"
-                      : "text-gray-500"
+                        ? "text-yellow-500"
+                        : "text-gray-500"
                   }`}
                 >
                   {count}/{MAX_CHARS}
@@ -267,7 +280,7 @@ function Post({ islogin, id, toast }) {
             </div>
 
             <button
-              disabled={!content.trim() && !selectedFile || isPosting}
+              disabled={(!content.trim() && !selectedFile) || isPosting}
               onClick={handleCreatePost}
               className="w-full bg-gray-900 text-white py-3 rounded-xl flex justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-all font-medium shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/30 active:scale-[0.98]"
             >
@@ -286,13 +299,16 @@ function Post({ islogin, id, toast }) {
           </div>
 
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} />
+            <PostCard key={post._id} post={post} IsHoveCard={true} />
           ))}
           {/* {posts.map((post) => (  
             <PostCard key={post._id} post={post} currentUserId={post.author} />
           ))} */}
           {hasmore && (
-            <div ref={loaderRef} className="h-10 flex items-center justify-center">
+            <div
+              ref={loaderRef}
+              className="h-10 flex items-center justify-center"
+            >
               {loading && (
                 <div className="w-8 h-8 border-4 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
               )}

@@ -4,8 +4,8 @@ import { HeartFilled, HeartOutlined } from "@ant-design/icons";
 import axios from "axios";
 import Comment from "./Comment.jsx";
 import { useNavigate } from "react-router-dom";
-
-function PostCard({ post, currentUserId }) {
+import { Link } from "react-router-dom";
+function PostCard({ post, currentUserId,IsHoveCard }) {
   const navigate = useNavigate();
   const [loaded, setloaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -129,6 +129,9 @@ function PostCard({ post, currentUserId }) {
   }, [showCard]);
 
   const handleMouseEnter = (id) => {
+    if (!IsHoveCard) {  
+      return;
+    }
     timerRef.current = setTimeout(async () => {
       console.log("FetchProfile 300Ms ")
       console.log(post)
@@ -147,6 +150,9 @@ function PostCard({ post, currentUserId }) {
   };
 
   const handleMouseLeave = () => {
+    if (!IsHoveCard) {
+      return;
+    } 
     clearTimeout(timerRef.current);
     setShowCard(false)
     setProfile(null) // cursor left before 300ms → no API call
@@ -221,9 +227,11 @@ function PostCard({ post, currentUserId }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900 leading-tight">
-              {profile.username}
+              <Link to={`/u/${profile.username}`}>{profile.username}</Link>
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">@{profile.username}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              <Link to={`/u/${profile.username}`}>@{profile.username}</Link>
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-3 divide-x divide-gray-100 border-y border-gray-100 mb-4">
@@ -269,7 +277,10 @@ function PostCard({ post, currentUserId }) {
           </div>
           <div>
             <p className="font-semibold text-gray-800 text-sm sm:text-base">
-              {post.author?.username}
+              <Link to={`/u/${post.author?.username}`}>
+                {post.author?.username}
+              </Link>
+             
             </p>
             <p className="text-xs text-gray-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />

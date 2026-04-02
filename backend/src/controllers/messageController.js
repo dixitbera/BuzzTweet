@@ -138,10 +138,11 @@ export const markMessagesAsSeen = async (req,res) => {
       { lastReadAt: currenttime },);
       const insertstatus=undefined;
       if(!result){
-         insertstatus=await MessageStatus.insertOne({
-          userId: userId,
-          partnerId: senderId,
-          lastReadAt:currenttime});
+         insertstatus = await MessageStatus.insertOne({
+           userId: senderId,
+           partnerId: userId,
+           lastReadAt: currenttime,
+         });
           // console.log("Message status inserted:", insertstatus);
       }
       if(!result && !insertstatus){

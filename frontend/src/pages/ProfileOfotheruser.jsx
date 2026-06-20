@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Alert from "../components/Alert.jsx";
 import ModalWrapper from "../components/ModalWrapper.jsx";
+import { MessageCircle } from "lucide-react";
 
 function ProfileOfotheruser() {
   const navigate = useNavigate();
@@ -302,6 +303,18 @@ function ProfileOfotheruser() {
     }
   }
 
+  const handleMessageClick = () => {
+    if (!data?._id || !data?.username) return;
+    navigate("/messages", {
+      state: {
+        openChatWith: {
+          userId: data._id,
+          username: data.username,
+        },
+      },
+    });
+  };
+
   if (profileLoading) {
     return (
       <>
@@ -464,75 +477,42 @@ function ProfileOfotheruser() {
                   <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                     {data.username}
                   </h2>
+
                   {!isOwnProfile && (
-                    <button
-                      onClick={handleFollowToggle}
-                      disabled={followLoading}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
-                        isFollowing
-                          ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
-                          : "bg-indigo-600 text-white hover:bg-indigo-700"
-                      } ${followLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-                    >
-                      {followLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : isFollowing ? (
-                        <UserCheck className="w-4 h-4" />
-                      ) : (
-                        <UserPlus className="w-4 h-4" />
-                      )}
-                      {followLoading
-                        ? "Updating"
-                        : isFollowing
-                          ? "Following"
-                          : "Follow"}
-                    </button>
+                    <>
+                      <button
+                        onClick={handleFollowToggle}
+                        disabled={followLoading}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+                          isFollowing
+                            ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
+                            : "bg-indigo-600 text-white hover:bg-indigo-700"
+                        } ${followLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+                      >
+                        {followLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : isFollowing ? (
+                          <UserCheck className="w-4 h-4" />
+                        ) : (
+                          <UserPlus className="w-4 h-4" />
+                        )}
+                        {followLoading
+                          ? "Updating"
+                          : isFollowing
+                            ? "Following"
+                            : "Follow"}
+                      </button>
+
+                      <button
+                        onClick={handleMessageClick}
+                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Message
+                      </button>
+                    </>
                   )}
                 </div>
-
-                {data?.bio && (
-                  <div className="mt-2">
-                    <p className="text-xs sm:text-sm text-gray-500">
-                      {data.bio}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-6 mt-2 sm:mt-3">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Grid className="w-4 h-4 text-indigo-500" />
-                    <span className="font-semibold text-sm sm:text-base">
-                      {data?.postcount || 0}
-                    </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">
-                      posts
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Users className="w-4 h-4 text-pink-500" />
-                    <span className="font-semibold text-sm sm:text-base">
-                      {data?.followers || 0}
-                    </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">
-                      followers
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <UserPlus className="w-4 h-4 text-green-500" />
-                    <span className="font-semibold text-sm sm:text-base">
-                      {data?.following || 0}
-                    </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">
-                      following
-                    </span>
-                  </div>
-                </div>
-
-                {profileError && (
-                  <p className="mt-3 text-xs sm:text-sm text-red-500">
-                    {profileError}
-                  </p>
-                )}
               </div>
             </div>
           </div>

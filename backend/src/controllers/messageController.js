@@ -1,6 +1,7 @@
 import Message from "../models/Message.js";
 import mongoose from "mongoose";
-import MessageStatus from "../models/MessageStatus.js"; 
+import MessageStatus from "../models/MessageStatus.js";
+import User from "../models/User.js";
 // export const sendMessage = (req, res) => {
 //   const { message } = req.body;
 
@@ -94,7 +95,9 @@ export const getMessagesuser = async (req, res) => {
                 { sender: receiverId, receiver: senderId },
             ],
         }).populate("sender", "username").populate("receiver", "username").sort({ timestamp: 1 });
-        const messageStatus = await MessageStatus.findOne({ userId: senderId, partnerId: receiverId });
+        // We need to know when the OTHER user (receiverId) last read OUR (senderId's) messages.
+        // That record is: "receiverId read senderId's messages at lastReadAt"
+        const messageStatus = await MessageStatus.findOne({ userId: receiverId, partnerId: senderId });
         // console.log("Message status for user:", messageStatus);
         // console.log("Fetched messages for user:", messages);
         res.json({ messages,lastReadAt: messageStatus ? messageStatus.lastReadAt : null });
@@ -127,31 +130,21 @@ export const InsertMessage = async (senderid, msg, receiverid) => {
   }
 };
 
-export const markMessagesAsSeen = async (req,res) => {
+export const markMessagesAsSeen = async (req, res) => {
   const { senderId } = req.body;
-  const userId = req.user.id;
-  console.log("Marking messages as seen from sender:", senderId, "to receiver:", userId);
-  try{  
+  const userId = req.user.id; // the current user — the one who JUST READ the messages
+  try {
     const currenttime = new Date();
-    const result = await MessageStatus.findOneAndUpdate(
+    // Record: "userId last read messages from senderId at currenttime"
+    // upsert:true creates the document if it doesn't exist — correct direction guaranteed
+    await MessageStatus.findOneAndUpdate(
       { userId: userId, partnerId: senderId },
-      { lastReadAt: currenttime },);
-      const insertstatus=undefined;
-      if(!result){
-         insertstatus = await MessageStatus.insertOne({
-           userId: senderId,
-           partnerId: userId,
-           lastReadAt: currenttime,
-         });
-          // console.log("Message status inserted:", insertstatus);
-      }
-      if(!result && !insertstatus){
-        //console.log("Failed to update or insert message status");
-        return res.status(500).json({ error: "Failed to update message status" });
-      }
-      res.status(200).json({ message: "Messages marked as seen" ,lastReadAt:currenttime});
-   // console.log("Message status updated:", result);
-  } catch(error){
+      { $set: { lastReadAt: currenttime } },
+      { upsert: true, new: true }
+    );
+    res.status(200).json({ message: "Messages marked as seen", lastReadAt: currenttime });
+  } catch (error) {
+    console.error("markMessagesAsSeen error:", error);
     res.status(500).json({ error: "Failed to mark messages as seen" });
   }
 }
@@ -160,7 +153,7 @@ export const sendMessage=async (req,res) => {
     const { content, receiver } = req.body;
     const userID=req.user.id;
     try {
-      const inser = InsertMessage(userID, content, receiver);
+      const inser = await InsertMessage(userID, content, receiver);
       if(inser){
          return res.status(200).json({message:"Send Successfully"})
       }
@@ -169,6 +162,86 @@ export const sendMessage=async (req,res) => {
       return  res.status(500).json({message:"Internal Server Error"})
     }
 }
+
+export const searchUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const q = (req.query.q || "").trim();
+
+    if (!q) return res.status(200).json({ users: [] });
+
+    const regex = new RegExp(q, "i");
+
+    const users = await User.find({
+      _id: { $ne: new mongoose.Types.ObjectId(currentUserId) },
+      username: { $regex: regex },
+    })
+      .select("_id username")
+      .limit(20)
+      .lean();
+
+    if (!users.length) return res.status(200).json({ users: [] });
+
+    const userIds = users.map((u) => u._id);
+
+    const latestMessages = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            {
+              sender: new mongoose.Types.ObjectId(currentUserId),
+              receiver: { $in: userIds },
+            },
+            {
+              receiver: new mongoose.Types.ObjectId(currentUserId),
+              sender: { $in: userIds },
+            },
+          ],
+        },
+      },
+      { $sort: { timestamp: -1 } },
+      {
+        $addFields: {
+          otherUser: {
+            $cond: [
+              { $eq: ["$sender", new mongoose.Types.ObjectId(currentUserId)] },
+              "$receiver",
+              "$sender",
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$otherUser",
+          lastMessage: { $first: "$content" },
+          lastTime: { $first: "$timestamp" },
+        },
+      },
+    ]);
+
+    const latestMap = new Map(
+      latestMessages.map((m) => [String(m._id), m])
+    );
+
+    const result = users.map((u) => {
+      const latest = latestMap.get(String(u._id));
+      return {
+        _id: u._id,
+        userId: u._id,
+        username: u.username,
+        hasConversation: Boolean(latest),
+        lastMessage: latest?.lastMessage || "",
+        lastTime: latest?.lastTime || null,
+      };
+    });
+
+    return res.status(200).json({ users: result });
+  } catch (err) {
+    console.error("searchUsers error:", err);
+    return res.status(500).json({ message: "Failed to search users" });
+  }
+};
 // const insert = await Message.insertMany([
     //   {
     //     sender: userId,

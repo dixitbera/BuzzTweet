@@ -376,6 +376,25 @@ function ProfilePostcard({ post, currentUserId, onPostUpdate, onPostDelete, onSh
               <MessageCircle className="w-5 h-5" />
               <span className="font-medium">{commentcount || 0}</span>
             </button>
+
+            {!isOwner && post.author?._id && post.author?.username && (
+              <button
+                onClick={() =>
+                  navigate("/messages", {
+                    state: {
+                      openChatWith: {
+                        userId: post.author._id,
+                        username: post.author.username,
+                      },
+                    },
+                  })
+                }
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full transition-all duration-200 text-sm text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 ml-auto"
+              >
+                <Send className="w-4 h-4" />
+                <span className="font-medium text-xs">Message</span>
+              </button>
+            )}
           </div>
         )}
 

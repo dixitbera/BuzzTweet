@@ -17,7 +17,7 @@ function AppContent() {
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     useEffect(() => {
-      fetch("http://localhost:5000/check-auth", {
+      fetch(`${import.meta.env.VITE_API_URL}/check-auth`, {
         credentials: "include",
       })
         .then((res) => {
@@ -25,8 +25,13 @@ function AppContent() {
            setIsLoggedIn(true);
             return res.json();
           }
-          else setIsLoggedIn(false);
-        }).then((data)=>setid(data.id))
+          else {
+            setIsLoggedIn(false);
+            return null;
+          }
+        }).then((data)=>{
+          if (data && data.id) setid(data.id);
+        }).catch((err) => console.error("Auth check failed"));
         
     }, []); 
   return (

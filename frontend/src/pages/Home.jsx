@@ -10,18 +10,13 @@ import {
   Zap,
   ArrowRight,
   Sparkles,
-  ChevronDown,
-  Image,
-  Smile,
-  Calendar,
-  Award,
   Globe,
   MessageSquare,
-  ThumbsUp,
-  BookMarked,
-  MoreHorizontal,
+  Award,
   LogIn,
   UserPlus,
+  Star,
+  Cpu,
 } from "lucide-react";
 import PostCard from "../components/Postcard.jsx";
 import axios from "axios";
@@ -33,7 +28,8 @@ export default function Home({ islogin, toast }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsVisible(true);
+    const t = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -42,15 +38,15 @@ export default function Home({ islogin, toast }) {
 
   async function fetchTrendingPosts() {
     try {
-      const res = await axios.get("http://localhost:5000/post", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/post`, {
         withCredentials: true,
         params: { cursor: undefined },
         headers: { "Content-Type": "application/json" },
       });
       const { dataf: newPosts } = res.data;
       setPosts(newPosts?.slice(0, 3) || []);
-    } catch (error) {
-      console.log(error);
+    } catch {
+      // silently handle
     } finally {
       setLoading(false);
     }
@@ -59,192 +55,226 @@ export default function Home({ islogin, toast }) {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 overflow-hidden">
-        {/* Animated Background - Light Theme */}
+      <div
+        className="page-content"
+        style={{ background: "var(--bg-base)" }}
+      >
+        {/* ── Animated background ─────────────────────────────────────── */}
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-gray-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-40 animate-blob"></div>
-          <div className="absolute top-0 -right-40 w-[500px] h-[500px] bg-gray-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-40 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-40 left-20 w-[500px] h-[500px] bg-gray-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-40 animate-blob animation-delay-4000"></div>
-          <div className="absolute bottom-0 right-20 w-[500px] h-[500px] bg-gray-200 rounded-full mix-blend-multiply filter blur-[120px] opacity-30 animate-blob animation-delay-3000"></div>
+          <div
+            className="absolute -top-60 -left-60 w-[600px] h-[600px] rounded-full animate-blob"
+            style={{ background: "rgba(99,102,241,0.07)", filter: "blur(100px)" }}
+          />
+          <div
+            className="absolute top-1/3 -right-60 w-[500px] h-[500px] rounded-full animate-blob animation-delay-2000"
+            style={{ background: "rgba(168,85,247,0.06)", filter: "blur(100px)" }}
+          />
+          <div
+            className="absolute -bottom-60 left-1/3 w-[500px] h-[500px] rounded-full animate-blob animation-delay-4000"
+            style={{ background: "rgba(6,182,212,0.05)", filter: "blur(100px)" }}
+          />
+          <div className="absolute inset-0 stars-bg opacity-60" />
         </div>
 
-        {/* Hero Section */}
-        <section className="relative overflow-hidden pt-16 pb-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+        {/* ── Hero ────────────────────────────────────────────────────── */}
+        <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-12">
+          <div className="max-w-6xl mx-auto">
             <div
-              className={`text-center transition-all duration-1000 transform ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-10 opacity-0"
+              className={`text-center transition-all duration-1000 ${
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
               }`}
             >
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-sm border border-gray-200 mb-8">
-                <Sparkles className="w-4 h-4 text-gray-700" />
-                <span className="text-sm text-gray-600 font-medium">The future of social networking</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 text-sm font-medium text-indigo-300"
+                style={{
+                  background: "rgba(99,102,241,0.1)",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                }}
+              >
+                <Sparkles className="w-4 h-4" aria-hidden="true" />
+                The next generation social platform
               </div>
 
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
-                Share Ideas,{" "}
-                <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+              {/* Headline */}
+              <h1
+                className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-6 leading-[1.05]"
+                style={{ letterSpacing: "-0.04em", textWrap: "balance" }}
+              >
+                <span className="text-white">Share Ideas,</span>
+                <br />
+                <span
+                  className="animate-gradient"
+                  style={{
+                    background: "linear-gradient(135deg, #6366f1, #a855f7, #06b6d4, #6366f1)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundSize: "300% 300%",
+                  }}
+                >
                   Spark Conversations
                 </span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Join a thriving community of creative minds. Express yourself, connect with like-minded people, and discover what's trending around the world.
+
+              <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Join a thriving community of creative minds. Express yourself, connect with
+                like-minded people, and discover what's trending around the world.
               </p>
 
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
                 {!islogin ? (
                   <>
                     <Link
                       to="/register"
-                      className="group px-8 py-4 bg-gray-900 text-white rounded-2xl text-lg font-semibold hover:bg-gray-800 transition-all hover:scale-105 shadow-lg shadow-gray-900/20 flex items-center gap-2"
+                      className="btn-primary flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-semibold group"
                     >
-                      Get Started
-                      <UserPlus className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      Get Started Free
+                      <UserPlus className="w-5 h-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                     </Link>
                     <Link
                       to="/login"
-                      className="px-8 py-4 bg-white text-gray-700 rounded-2xl text-lg font-medium border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all hover:scale-105 flex items-center gap-2"
+                      className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-medium text-slate-300 hover:text-white transition-all"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      }}
                     >
-                      <LogIn className="w-5 h-5" />
-                      Log In
+                      <LogIn className="w-5 h-5" aria-hidden="true" />
+                      Sign In
                     </Link>
                   </>
                 ) : (
                   <Link
                     to="/post"
-                    className="group px-8 py-4 bg-gray-900 text-white rounded-2xl text-lg font-semibold hover:bg-gray-800 transition-all hover:scale-105 shadow-lg shadow-gray-900/20 flex items-center gap-2"
+                    className="btn-primary flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-semibold group"
                   >
-                    Start Posting
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    Explore Feed
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                   </Link>
                 )}
               </div>
-            </div>
 
-            {/* Floating Cards Animation */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto">
-              <FloatingCard delay={0}>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-                  <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Share Your Story</p>
-              </FloatingCard>
-
-              <FloatingCard delay={200}>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-                  <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Connect & Engage</p>
-              </FloatingCard>
-
-              <FloatingCard delay={400}>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Trending Topics</p>
-              </FloatingCard>
-
-              <FloatingCard delay={600}>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-                  <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Spread Ideas</p>
-              </FloatingCard>
+              {/* Feature Pills */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                {[
+                  { icon: MessageCircle, label: "Share Your Story",   delay: "animation-delay-100" },
+                  { icon: Heart,         label: "Connect & Engage",   delay: "animation-delay-200" },
+                  { icon: TrendingUp,    label: "Trending Topics",    delay: "animation-delay-300" },
+                  { icon: Share2,        label: "Spread Ideas",       delay: "animation-delay-400" },
+                ].map(({ icon: Icon, label, delay }) => (
+                  <div
+                    key={label}
+                    className={`animate-float glass-card text-center p-5 group cursor-default ${delay}`}
+                  >
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3"
+                      style={{ background: "rgba(99,102,241,0.15)" }}
+                    >
+                      <Icon className="w-5 h-5 text-indigo-400" aria-hidden="true" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-300">{label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ── Why BuzzTweet ────────────────────────────────────────────── */}
+        <section className="py-20 px-4 sm:px-6 lg:px-12 relative">
+          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                Why Choose{" "}
-                <span className="bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
-                  BuzzTweet
-                </span>
-                ?
+              <h2
+                className="text-4xl md:text-5xl font-bold text-white mb-4"
+                style={{ letterSpacing: "-0.03em", textWrap: "balance" }}
+              >
+                Why choose{" "}
+                <span className="gradient-text">BuzzTweet</span>?
               </h2>
-              <p className="text-gray-500 max-w-2xl mx-auto">
-                Experience a new way of connecting with people who share your interests and passions.
+              <p className="text-slate-400 max-w-xl mx-auto">
+                Experience a new way of connecting with people who share your interests.
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              <FeatureCard
-                icon={<Zap className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Lightning Fast"
-                description="Share your thoughts instantly and stay updated with real-time feeds powered by cutting-edge technology."
-              />
-
-              <FeatureCard
-                icon={<Users className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Global Community"
-                description="Connect with millions of users worldwide and build your network across borders and cultures."
-              />
-
-              <FeatureCard
-                icon={<TrendingUp className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Trending Topics"
-                description="Discover what's happening and join conversations that matter in your interests."
-              />
-
-              <FeatureCard
-                icon={<MessageSquare className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Rich Interactions"
-                description="Engage with posts through comments, likes, and shares. Express yourself with media and links."
-              />
-
-              <FeatureCard
-                icon={<Award className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Build Your Brand"
-                description="Create a unique profile, share your expertise, and grow your following organically."
-              />
-
-              <FeatureCard
-                icon={<Globe className="w-6 h-6" />}
-                gradient="from-gray-100 to-gray-200"
-                iconColor="text-gray-700"
-                title="Stay Informed"
-                description="Follow topics you care about and never miss what's happening in your world."
-              />
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[
+                {
+                  icon: Zap,
+                  title: "Lightning Fast",
+                  desc: "Share thoughts instantly with real-time feeds powered by cutting-edge technology.",
+                  color: "#f59e0b",
+                  bg: "rgba(245,158,11,0.1)",
+                },
+                {
+                  icon: Users,
+                  title: "Global Community",
+                  desc: "Connect with users worldwide and build your network across borders and cultures.",
+                  color: "#06b6d4",
+                  bg: "rgba(6,182,212,0.1)",
+                },
+                {
+                  icon: TrendingUp,
+                  title: "Trending Topics",
+                  desc: "Discover what's happening and join conversations that matter to you.",
+                  color: "#a855f7",
+                  bg: "rgba(168,85,247,0.1)",
+                },
+                {
+                  icon: MessageSquare,
+                  title: "Rich Interactions",
+                  desc: "Engage through comments, likes, and shares. Express yourself with media and links.",
+                  color: "#6366f1",
+                  bg: "rgba(99,102,241,0.1)",
+                },
+                {
+                  icon: Award,
+                  title: "Build Your Brand",
+                  desc: "Create a unique profile, share expertise, and grow your following organically.",
+                  color: "#ec4899",
+                  bg: "rgba(236,72,153,0.1)",
+                },
+                {
+                  icon: Cpu,
+                  title: "AI-Powered",
+                  desc: "Generate engaging posts with our built-in AI assistant — never stare at a blank editor.",
+                  color: "#10b981",
+                  bg: "rgba(16,185,129,0.1)",
+                },
+              ].map(({ icon: Icon, title, desc, color, bg }) => (
+                <FeatureCard
+                  key={title}
+                  icon={<Icon className="w-5 h-5" style={{ color }} aria-hidden="true" />}
+                  iconBg={bg}
+                  title={title}
+                  description={desc}
+                />
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Trending Posts Preview */}
+        {/* ── Trending Posts Preview ───────────────────────────────────── */}
         {!loading && posts.length > 0 && (
-          <section className="py-20 sm:py-24 relative">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <section className="py-20 px-4 sm:px-6 lg:px-12">
+            <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <h2
+                  className="text-3xl md:text-4xl font-bold text-white mb-3"
+                  style={{ letterSpacing: "-0.03em" }}
+                >
                   What's Trending
                 </h2>
-                <p className="text-gray-500">
-                  See what the community is talking about right now
-                </p>
+                <p className="text-slate-400">See what the community is talking about</p>
               </div>
 
               <div className="space-y-4">
-                {posts.map((post, index) => (
+                {posts.map((post, idx) => (
                   <div
                     key={post._id}
-                    className="transform transition-all duration-300 hover:scale-[1.01]"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${idx * 120}ms` }}
                   >
                     <PostCard post={post} />
                   </div>
@@ -254,159 +284,110 @@ export default function Home({ islogin, toast }) {
               <div className="text-center mt-8">
                 <Link
                   to={islogin ? "/post" : "/register"}
-                  className="inline-flex items-center gap-2 px-8 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all"
+                  className="btn-primary inline-flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold"
                 >
                   {islogin ? "View All Posts" : "Join to See More"}
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </Link>
               </div>
             </div>
           </section>
         )}
 
-        {/* Stats Section */}
-        <section className="py-20 sm:py-24 relative bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid sm:grid-cols-3 gap-6 sm:gap-8 text-center">
-              <StatCard
-                number="10M+"
-                label="Active Users"
-                gradient="from-gray-600 to-gray-800"
-              />
-              <StatCard
-                number="50M+"
-                label="Posts Daily"
-                gradient="from-gray-600 to-gray-800"
-              />
-              <StatCard
-                number="150+"
-                label="Countries"
-                gradient="from-gray-600 to-gray-800"
-              />
+        {/* ── Stats ───────────────────────────────────────────────────── */}
+        <section className="py-20 px-4 sm:px-6 lg:px-12">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid sm:grid-cols-3 gap-6">
+              <StatCard number="10M+" label="Active Users"   gradient="from-indigo-500 to-violet-500" />
+              <StatCard number="50M+" label="Posts Daily"   gradient="from-violet-500 to-cyan-500"   />
+              <StatCard number="150+" label="Countries"      gradient="from-cyan-500 to-indigo-500"   />
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 sm:py-24 relative">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              {/* Clean white background */}
-              <div className="absolute inset-0 bg-white"></div>
-
-              {/* Subtle pattern overlay */}
-              <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
-
-              {/* Decorative elements */}
-              <div className="absolute top-0 -left-20 w-40 h-40 bg-gray-100 rounded-full filter blur-3xl"></div>
-              <div className="absolute bottom-0 right-20 w-40 h-40 bg-gray-100 rounded-full filter blur-3xl"></div>
-
-              <div className="relative px-8 py-16 md:py-20 text-center">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                  Ready to Start Buzzing?
-                </h2>
-                <p className="text-lg text-gray-500 mb-8 max-w-xl mx-auto">
-                  Join thousands of users already sharing their thoughts and connecting with others.
-                </p>
-                {!islogin ? (
+        {/* ── CTA ─────────────────────────────────────────────────────── */}
+        {!islogin && (
+          <section className="py-20 px-4 sm:px-6 lg:px-12">
+            <div className="max-w-3xl mx-auto">
+              <div
+                className="relative rounded-3xl overflow-hidden p-12 text-center"
+                style={{
+                  background: "linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15), rgba(6,182,212,0.1))",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                }}
+              >
+                {/* Glow blobs */}
+                <div
+                  className="absolute -top-10 -left-10 w-40 h-40 rounded-full"
+                  style={{ background: "rgba(99,102,241,0.15)", filter: "blur(40px)" }}
+                />
+                <div
+                  className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full"
+                  style={{ background: "rgba(168,85,247,0.15)", filter: "blur(40px)" }}
+                />
+                <div className="relative">
+                  <div
+                    className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6"
+                    style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}
+                  >
+                    <Star className="w-7 h-7 text-white" aria-hidden="true" />
+                  </div>
+                  <h2
+                    className="text-3xl md:text-4xl font-bold text-white mb-4"
+                    style={{ letterSpacing: "-0.03em" }}
+                  >
+                    Ready to Start Buzzing?
+                  </h2>
+                  <p className="text-slate-400 mb-8 max-w-md mx-auto">
+                    Join thousands of users already sharing their thoughts and connecting with others.
+                  </p>
                   <Link
                     to="/register"
-                    className="inline-flex items-center gap-2 px-10 py-4 bg-gray-900 text-white rounded-2xl text-lg font-semibold hover:bg-gray-800 transition-all hover:scale-105 shadow-xl"
+                    className="btn-primary inline-flex items-center gap-2 px-10 py-4 rounded-2xl text-base font-semibold"
                   >
-                    Sign Up Now
-                    <ArrowRight className="w-5 h-5" />
+                    Sign Up for Free
+                    <ArrowRight className="w-5 h-5" aria-hidden="true" />
                   </Link>
-                ) : (
-                  <Link
-                    to="/post"
-                    className="inline-flex items-center gap-2 px-10 py-4 bg-gray-900 text-white rounded-2xl text-lg font-semibold hover:bg-gray-800 transition-all hover:scale-105 shadow-xl"
-                  >
-                    Explore Feed
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="py-10 bg-white border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-lg font-bold text-gray-900">BuzzTweet</span>
-              </div>
-              <div className="text-gray-500 text-sm text-center sm:text-right">
-                <p>© 2024 BuzzTweet. All rights reserved.</p>
               </div>
             </div>
+          </section>
+        )}
+
+        {/* ── Footer ──────────────────────────────────────────────────── */}
+        <footer
+          className="py-8 px-4 sm:px-6"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}
+              >
+                <Sparkles className="w-4 h-4 text-white" aria-hidden="true" />
+              </div>
+              <span className="font-bold text-white">BuzzTweet</span>
+            </div>
+            <p className="text-slate-600 text-sm">© 2024 BuzzTweet. All rights reserved.</p>
           </div>
         </footer>
       </div>
-
-      <style>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 10s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animation-delay-3000 {
-          animation-delay: 3s;
-        }
-      `}</style>
     </>
   );
 }
 
-function FloatingCard({ children, delay }) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
+function FeatureCard({ icon, iconBg, title, description }) {
   return (
-    <div
-      className={`transition-all duration-1000 transform ${
-        isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-      }`}
-      style={{ animation: "float 4s ease-in-out infinite" }}
-    >
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all hover:scale-105 text-center group">
-        {children}
+    <div className="glass-card p-6 group">
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+        style={{ background: iconBg }}
+      >
+        {icon}
       </div>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, gradient, iconColor, title, description }) {
-  return (
-    <div className="group relative p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-      {/* Subtle gradient on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 from-gray-50 to-white"></div>
-
-      <div className="relative">
-        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-5`}>
-          <div className={iconColor}>{icon}</div>
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
-        <p className="text-gray-500 leading-relaxed text-sm sm:text-base">{description}</p>
-      </div>
+      <h3 className="text-base font-bold text-white mb-2">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -420,7 +401,6 @@ function StatCard({ number, label, gradient }) {
     const steps = 50;
     const increment = target / steps;
     let current = 0;
-
     const timer = setInterval(() => {
       current += increment;
       if (current >= target) {
@@ -430,16 +410,20 @@ function StatCard({ number, label, gradient }) {
         setCount(Math.floor(current));
       }
     }, duration / steps);
-
     return () => clearInterval(timer);
   }, [number]);
 
   return (
-    <div className="relative p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className={`text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent mb-2`}>
+    <div
+      className="glass-card p-8 text-center"
+    >
+      <div
+        className={`text-5xl md:text-6xl font-black bg-gradient-to-r ${gradient} bg-clip-text text-transparent mb-2`}
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
         {count > 0 ? `${count}${number.replace(/\d/g, "")}` : number}
       </div>
-      <div className="text-lg sm:text-xl text-gray-500 font-medium">{label}</div>
+      <div className="text-slate-400 font-medium">{label}</div>
     </div>
   );
 }

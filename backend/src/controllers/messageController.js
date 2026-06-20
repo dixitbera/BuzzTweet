@@ -4,9 +4,6 @@ import MessageStatus from "../models/MessageStatus.js";
 import User from "../models/User.js";
 // export const sendMessage = (req, res) => {
 //   const { message } = req.body;
-
-//   console.log("Route received:", message);
-
 //   // get socket instance
 //   const io = req.app.get("io");
   
@@ -17,75 +14,58 @@ import User from "../models/User.js";
 // };
 
 export const getMessages = async (req, res) => {
-  // For demonstration, we return a static list of messages
-  const id = req.user.id; // Get user ID from authenticated request
-  const userId =new mongoose.Types.ObjectId(id); // Convert to ObjectId
-  // console.log("Authenticated user ID:", userId);
+  const id = req.user.id; 
+  const currentUserId = new mongoose.Types.ObjectId(id); 
+
   try {
-    // console.log("Fetching messages for user ID:", userId);  
+    const latestMessages = await Message.aggregate([
+      {
+        $match: {
+          $or: [{ sender: currentUserId }, { receiver: currentUserId }],
+        },
+      },
+      { $sort: { timestamp: -1 } },
+      {
+        $addFields: {
+          otherUser: {
+            $cond: [
+              { $eq: ["$sender", currentUserId] },
+              "$receiver",
+              "$sender",
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$otherUser",
+          lastMessage: { $first: "$content" },
+          lastTime: { $first: "$timestamp" },
+        },
+      },
+      { $sort: { lastTime: -1 } }
+    ]);
+
+    const populatedMessages = await User.populate(latestMessages, { path: "_id", select: "username" });
     
-    // console.log(userId)
- const chats = await Message.aggregate([
-   {
-     $match: {
-       $or: [{ sender: userId }, { receiver: userId }],
-     },
-   },
+    const chats = populatedMessages
+      .filter(msg => msg._id) // filter out deleted users
+      .map(msg => ({
+        userId: msg._id._id,
+        username: msg._id.username,
+        lastMessage: msg.lastMessage,
+        lastTime: msg.lastTime
+      }));
 
-   {
-     $addFields: {
-       chatUser: {
-         $cond: [{ $eq: ["$sender", userId] }, "$receiver", "$sender"],
-       },
-     },
-   },
-
-   // ✅ sort by timestamp BEFORE grouping
-   { $sort: { timestamp: -1 } },
-
-   {
-     $group: {
-       _id: "$chatUser",
-       lastMessage: { $first: "$content" },
-       lastTime: { $first: "$timestamp" },
-     },
-   },
-
-   {
-     $lookup: {
-       from: "users",
-       localField: "_id",
-       foreignField: "_id",
-       as: "user",
-     },
-   },
-   { $unwind: "$user" },
-
-   {
-     $project: {
-       _id: 0,
-       userId: "$user._id",
-       username: "$user.username",
-       lastMessage: 1,
-       lastTime: 1,
-     },
-   },
-
-   // ✅ sort chat list by last message time
-   { $sort: { lastTime: -1 } },
- ]);
-    // console.log("Aggregated message list:", chats);
     res.json({ messages: chats });
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).json({ error: "Failed to fetch messages" });
   }
-  // res.json(messages);
-} 
+}
 
 export const getMessagesuser = async (req, res) => {
     const {reciverid}=req.body;
-    // console.log(reciverid) 
     const senderId = req.user.id;
     const receiverId = new mongoose.Types.ObjectId(reciverid);
     try { 
@@ -98,16 +78,14 @@ export const getMessagesuser = async (req, res) => {
         // We need to know when the OTHER user (receiverId) last read OUR (senderId's) messages.
         // That record is: "receiverId read senderId's messages at lastReadAt"
         const messageStatus = await MessageStatus.findOne({ userId: receiverId, partnerId: senderId });
-        // console.log("Message status for user:", messageStatus);
-        // console.log("Fetched messages for user:", messages);
         res.json({ messages,lastReadAt: messageStatus ? messageStatus.lastReadAt : null });
     } catch (error) {
-        console.log(error)    
+        console.error(error);
     }
   }
+
 export const InsertMessage = async (senderid, msg, receiverid) => {
   try {
-    // console.log(senderid,"c",receiverid)
     const currenttime=new Date();
     const senderids = new mongoose.Types.ObjectId(senderid);
     const receiverids = new mongoose.Types.ObjectId(receiverid);
@@ -117,15 +95,13 @@ export const InsertMessage = async (senderid, msg, receiverid) => {
       content: msg,
       timestamp: currenttime,
     });
-    // console.log("New message document:", newMessage);
     const resu = await newMessage.save();
-    // console.log("Message saved to database:", resu);
     if (resu) {
       return true;
     }
     return false;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return false;
   }
 };
@@ -273,5 +249,4 @@ export const searchUsers = async (req, res) => {
     //     receiver: userId,
     //     content: "Hi user1!",
     //   },
-    // ]);
-    // console.log("Inserted messages:", insert);
+    // ]);

@@ -3,8 +3,6 @@ import User from "../models/User.js";
 export const UpdateProfileDetails = async (req, res) => {
   const userid = req.user.id;
   const { username, email,bio } = req.body;
-  console.log( "Received update request with username:",username,"and email:",email, "and bio:", bio);
-  
   try {
     const user = await User.findById(userid).select("-password -__v");
     if (!user) {

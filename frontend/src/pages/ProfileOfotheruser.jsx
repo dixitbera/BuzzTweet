@@ -5,91 +5,56 @@ import { useNavigate, useParams } from "react-router-dom";
 import PostCard from "../components/Postcard.jsx";
 import ProfilePostcard from "../components/ProfilePostcard.jsx";
 import {
-  ArrowLeft,
-  Clock,
-  Grid,
-  Loader2,
-  UserCheck,
-  UserPlus,
-  Users,
-  UserX,
-  Trash2,
+  ArrowLeft, Clock, Grid, Loader2, UserCheck, UserPlus,
+  Users, UserX, Trash2, Sparkles, MessageCircle,
 } from "lucide-react";
 import Alert from "../components/Alert.jsx";
 import ModalWrapper from "../components/ModalWrapper.jsx";
-import { MessageCircle } from "lucide-react";
 
 function ProfileOfotheruser() {
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
   const { username } = useParams();
 
-  const [data, setData] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [hasmore, setHasmore] = useState(true);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-  const [cursor, setCursor] = useState(undefined);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileNotFound, setProfileNotFound] = useState(false);
-  const [profileError, setProfileError] = useState("");
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [postToDelete, setPostToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastConfig, setToastConfig] = useState({ type: "", message: "" });
-
+  const [data,               setData]               = useState(null);
+  const [posts,              setPosts]              = useState([]);
+  const [hasmore,            setHasmore]            = useState(true);
+  const [loadingPosts,       setLoadingPosts]       = useState(false);
+  const [cursor,             setCursor]             = useState(undefined);
+  const [profileLoading,     setProfileLoading]     = useState(true);
+  const [profileNotFound,    setProfileNotFound]    = useState(false);
+  const [profileError,       setProfileError]       = useState("");
+  const [isFollowing,        setIsFollowing]        = useState(false);
+  const [isOwnProfile,       setIsOwnProfile]       = useState(false);
+  const [followLoading,      setFollowLoading]      = useState(false);
+  const [showDeleteConfirm,  setShowDeleteConfirm]  = useState(false);
+  const [postToDelete,       setPostToDelete]       = useState(null);
+  const [isDeleting,         setIsDeleting]         = useState(false);
+  const [showToast,          setShowToast]          = useState(false);
+  const [toastConfig,        setToastConfig]        = useState({ type: "", message: "" });
   const loaderRef = useRef(null);
 
-  async function fetchPost(
-    nextCursor = undefined,
-    targetUsername = username,
-    ignore = false,
-  ) {
+  async function fetchPost(nextCursor = undefined, targetUsername = username, ignore = false) {
     if (loadingPosts) return;
     if (nextCursor && !hasmore) return;
     if (profileNotFound) return;
-
     setLoadingPosts(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/u/post",
+        `${import.meta.env.VITE_API_URL}/api/u/post`,
         { username: targetUsername },
-        {
-          params: { cursor: nextCursor },
-          withCredentials: true,
-          headers: { "Content-Type": "application/json" },
-        },
+        { params: { cursor: nextCursor }, withCredentials: true, headers: { "Content-Type": "application/json" } },
       );
-
       const { dataf: newPosts = [], hasmore: more = false, cursorb } = res.data;
       if (ignore) return;
-
-      if (!nextCursor) {
-        setPosts(newPosts);
-      } else {
-        setPosts((prev) => [...prev, ...newPosts]);
-      }
-
-      setHasmore(Boolean(more));
-      setCursor(cursorb);
+      if (!nextCursor) setPosts(newPosts); else setPosts((prev) => [...prev, ...newPosts]);
+      setHasmore(Boolean(more)); setCursor(cursorb);
     } catch (error) {
       if (ignore) return;
-
       const status = error?.response?.status;
-      if (status === 401) {
-        navigate("/login");
-      } else if (status === 404) {
-        setProfileNotFound(true);
-      } else {
-        setHasmore(false);
-      }
-    } finally {
-      if (!ignore) {
-        setLoadingPosts(false);
-      }
-    }
+      if (status === 401) navigate("/login");
+      else if (status === 404) setProfileNotFound(true);
+      else setHasmore(false);
+    } finally { if (!ignore) setLoadingPosts(false); }
   }
 
   async function fetchFollowStatus(targetUsername, ignore = false) {
@@ -98,280 +63,180 @@ function ProfileOfotheruser() {
         `http://localhost:5000/api/u/${targetUsername}/follow-status`,
         { withCredentials: true },
       );
-
       if (ignore) return;
       setIsFollowing(Boolean(response.data?.isFollowing));
       setIsOwnProfile(Boolean(response.data?.isOwnProfile));
     } catch (error) {
       if (ignore) return;
-      if (error?.response?.status === 401) {
-        navigate("/login");
-      }
+      if (error?.response?.status === 401) navigate("/login");
     }
   }
 
   useEffect(() => {
     let ignore = false;
-
     async function loadPage() {
-      setProfileLoading(true);
-      setProfileNotFound(false);
-      setProfileError("");
-      setData(null);
-      setPosts([]);
-      setHasmore(true);
-      setCursor(undefined);
-      setIsFollowing(false);
-      setIsOwnProfile(false);
-
+      setProfileLoading(true); setProfileNotFound(false); setProfileError("");
+      setData(null); setPosts([]); setHasmore(true); setCursor(undefined);
+      setIsFollowing(false); setIsOwnProfile(false);
       try {
-        const profileResponse = await axios.get(
-          `http://localhost:5000/api/u/${username}`,
-          { withCredentials: true },
-        );
-
+        const profileResponse = await axios.get(`http://localhost:5000/api/u/${username}`, { withCredentials: true });
         if (ignore) return;
         const profileData = profileResponse.data;
         setData(profileData);
-
         let ownProfile = false;
         try {
-          const authRes = await axios.get("http://localhost:5000/check-auth", {
-            withCredentials: true,
-          });
+          const authRes = await axios.get(`${import.meta.env.VITE_API_URL}/check-auth`, { withCredentials: true });
           if (!ignore && authRes?.data?.id) {
-            ownProfile =
-              authRes.data.id.toString() === profileData?._id?.toString();
+            ownProfile = authRes.data.id.toString() === profileData?._id?.toString();
             setIsOwnProfile(ownProfile);
           }
-        } catch {
-          if (!ignore) {
-            navigate("/login");
-            return;
-          }
-        }
-
-        if (!ownProfile) {
-          await fetchFollowStatus(username, ignore);
-        }
-
+        } catch { if (!ignore) { navigate("/login"); return; } }
+        if (!ownProfile) await fetchFollowStatus(username, ignore);
         await fetchPost(undefined, username, ignore);
       } catch (error) {
         if (ignore) return;
-
         const status = error?.response?.status;
-        if (status === 401) {
-          navigate("/login");
-          return;
-        }
-        if (status === 404) {
-          setProfileNotFound(true);
-          return;
-        }
+        if (status === 401) { navigate("/login"); return; }
+        if (status === 404) { setProfileNotFound(true); return; }
         setProfileError("Unable to load this profile right now.");
-      } finally {
-        if (!ignore) {
-          setProfileLoading(false);
-        }
-      }
+      } finally { if (!ignore) setProfileLoading(false); }
     }
-
     loadPage();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [navigate, username]);
 
   useEffect(() => {
     if (profileLoading || profileNotFound || !data || !hasmore) return;
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingPosts) {
-          fetchPost(cursor);
-        }
-      },
+      (entries) => { if (entries[0].isIntersecting && !loadingPosts) fetchPost(cursor); },
       { threshold: 0.5 },
     );
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [cursor, data, hasmore, loadingPosts, profileLoading, profileNotFound]);
 
-  const handleShowToast = (type, message) => {
-    setToastConfig({ type, message });
-    setShowToast(true);
-  };
-
-  const handlePostUpdate = (updatedPost) => {
-    setPosts((prev) =>
-      prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
-    );
-  };
-
+  const handleShowToast = (type, message) => { setToastConfig({ type, message }); setShowToast(true); };
+  const handlePostUpdate = (updatedPost) => setPosts((prev) => prev.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
   const handlePostDelete = (postId) => {
-    setPosts((prev) => prev.filter((post) => post._id !== postId));
-    setData((prev) => ({
-      ...prev,
-      postcount: Math.max(0, (prev.postcount || 1) - 1),
-    }));
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
+    setData((prev) => ({ ...prev, postcount: Math.max(0, (prev.postcount || 1) - 1) }));
   };
-
-  const handleDeleteRequest = (postId) => {
-    setPostToDelete(postId);
-    setShowDeleteConfirm(true);
-  };
+  const handleDeleteRequest = (postId) => { setPostToDelete(postId); setShowDeleteConfirm(true); };
 
   const confirmDeletePost = async () => {
     if (!postToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await axios.delete("http://localhost:5000/post/delete", {
-        data: { postid: postToDelete },
-        withCredentials: true,
+      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/post/delete`, {
+        data: { postid: postToDelete }, withCredentials: true,
       });
       if (res.data?.flag) {
         handleShowToast("success", "Post deleted successfully!");
-        setPosts((prev) => {
-          const newPosts = prev.filter((post) => {
-            const postId = post._id?.toString() || post._id;
-            const deleteId = postToDelete?.toString() || postToDelete;
-            return postId !== deleteId;
-          });
-          return newPosts;
-        });
-        setData((prev) => ({
-          ...prev,
-          postcount: Math.max(0, (prev.postcount || 1) - 1),
-        }));
+        setPosts((prev) => prev.filter((p) => p._id?.toString() !== postToDelete?.toString()));
+        setData((prev) => ({ ...prev, postcount: Math.max(0, (prev.postcount || 1) - 1) }));
       } else {
-        handleShowToast(
-          "error",
-          res.data?.message || "Failed to delete post"
-        );
+        handleShowToast("error", res.data?.message || "Failed to delete post");
       }
-    } catch (error) {
-      handleShowToast(
-        "error",
-        "Failed to delete post. Please try again."
-      );
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setPostToDelete(null);
-    }
+    } catch { handleShowToast("error", "Failed to delete post. Please try again."); }
+    finally { setIsDeleting(false); setShowDeleteConfirm(false); setPostToDelete(null); }
   };
 
   async function handleFollowToggle() {
     if (!data || followLoading || isOwnProfile) return;
-
     const nextFollowState = !isFollowing;
-    setFollowLoading(true);
-    setProfileError("");
-
+    setFollowLoading(true); setProfileError("");
     try {
       const response = await axios.post(
         `http://localhost:5000/api/u/${username}/follow`,
-        { follow: nextFollowState },
-        { withCredentials: true },
+        { follow: nextFollowState }, { withCredentials: true },
       );
-
-      const nextStatus = Boolean(response?.data?.isFollowing);
+      const nextStatus        = Boolean(response?.data?.isFollowing);
       const nextFollowersCount = Number(response?.data?.followers);
-
       setIsFollowing(nextStatus);
       setData((prev) => {
         if (!prev) return prev;
-        return {
-          ...prev,
-          followers: Number.isFinite(nextFollowersCount)
-            ? nextFollowersCount
-            : prev.followers || 0,
-        };
+        return { ...prev, followers: Number.isFinite(nextFollowersCount) ? nextFollowersCount : prev.followers || 0 };
       });
     } catch (error) {
-      if (error?.response?.status === 401) {
-        navigate("/login");
-        return;
-      }
+      if (error?.response?.status === 401) { navigate("/login"); return; }
       setProfileError("Unable to update follow status. Please try again.");
-    } finally {
-      setFollowLoading(false);
-    }
+    } finally { setFollowLoading(false); }
   }
 
   const handleMessageClick = () => {
     if (!data?._id || !data?.username) return;
-    navigate("/messages", {
-      state: {
-        openChatWith: {
-          userId: data._id,
-          username: data.username,
-        },
-      },
-    });
+    navigate("/messages", { state: { openChatWith: { userId: data._id, username: data.username } } });
   };
 
+  /* ── Loading skeleton ── */
   if (profileLoading) {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-3 sm:px-4 md:ml-[260px]">
-          <div className="max-w-2xl mx-auto space-y-5 sm:space-y-6 animate-pulse">
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
-              <div className="flex gap-4 sm:gap-5">
-                <div className="w-20 h-20 rounded-2xl bg-gray-100" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-5 w-40 bg-gray-100 rounded" />
-                  <div className="h-3 w-2/3 bg-gray-100 rounded" />
-                  <div className="h-3 w-1/2 bg-gray-100 rounded" />
+        <div className="page-content py-8 px-4" style={{ background: "var(--bg-base)" }}>
+          <div className="max-w-2xl mx-auto space-y-5 animate-pulse">
+            <div className="glass-card overflow-hidden">
+              <div className="h-24" style={{ background: "rgba(255,255,255,0.04)" }} />
+              <div className="p-5">
+                <div className="flex items-end justify-between -mt-10 mb-4">
+                  <div className="w-20 h-20 rounded-2xl" style={{ background: "rgba(255,255,255,0.08)" }} />
+                  <div className="w-28 h-9 rounded-xl" style={{ background: "rgba(255,255,255,0.06)" }} />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-5 w-36 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+                  <div className="h-3 w-24 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
                 </div>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-              <div className="h-4 w-1/3 bg-gray-100 rounded mb-3" />
-              <div className="h-24 bg-gray-100 rounded-xl" />
-            </div>
+            {[1, 2].map((i) => (
+              <div key={i} className="glass-card p-5 space-y-3">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-24 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+                    <div className="h-2 w-16 rounded" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  </div>
+                </div>
+                <div className="h-16 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }} />
+              </div>
+            ))}
           </div>
         </div>
       </>
     );
   }
 
+  /* ── 404 ── */
   if (profileNotFound) {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-3 sm:px-4 md:ml-[260px] flex items-start sm:items-center justify-center">
-          <div className="w-full max-w-xl bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-500 mx-auto flex items-center justify-center mb-4">
-              <UserX className="w-8 h-8" />
+        <div className="page-content flex items-center justify-center py-12 px-4" style={{ background: "var(--bg-base)" }}>
+          <div className="glass-card p-10 max-w-md w-full text-center">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}
+            >
+              <UserX className="w-8 h-8 text-red-400" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              404
-            </h2>
-            <p className="text-lg font-semibold text-gray-700 mt-1">
-              User Not Found
+            <h2 className="text-3xl font-black text-white mb-1" style={{ letterSpacing: "-0.04em" }}>404</h2>
+            <p className="text-lg font-semibold text-white mb-2">User Not Found</p>
+            <p className="text-sm text-slate-500 mb-7">
+              We couldn't find <span className="text-slate-300">@{username}</span>. The account may not exist or was changed.
             </p>
-            <p className="text-sm text-gray-500 mt-2">
-              We could not find @{username}. The account may not exist or was
-              changed.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => navigate("/")}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
+                className="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 Go Home
               </button>
               <button
                 onClick={() => navigate(-1)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
                 Go Back
               </button>
             </div>
@@ -381,18 +246,18 @@ function ProfileOfotheruser() {
     );
   }
 
+  /* ── Error ── */
   if (!data) {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-3 sm:px-4 md:ml-[260px]">
-          <div className="max-w-xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 text-center">
-            <p className="text-sm text-red-500">
-              {profileError || "Unable to load this profile right now."}
-            </p>
+        <div className="page-content flex items-center justify-center py-12 px-4" style={{ background: "var(--bg-base)" }}>
+          <div className="glass-card p-8 max-w-sm w-full text-center">
+            <p className="text-sm text-red-400 mb-4">{profileError || "Unable to load this profile right now."}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="px-5 py-2.5 rounded-xl text-sm text-slate-300 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               Retry
             </button>
@@ -402,55 +267,42 @@ function ProfileOfotheruser() {
     );
   }
 
+  /* ── Main ── */
   return (
     <>
       <Navbar />
       {showToast && (
-        <Alert
-          type={toastConfig.type}
-          message={toastConfig.message}
-          onClose={() => setShowToast(false)}
-          duration={3000}
-        />
+        <Alert type={toastConfig.type} message={toastConfig.message} onClose={() => setShowToast(false)} duration={3000} />
       )}
 
+      {/* Delete Confirm Modal */}
       {showDeleteConfirm && (
         <ModalWrapper showf={setShowDeleteConfirm}>
-          <div className="p-6 max-w-sm mx-auto">
+          <div className="p-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8 text-red-600" />
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}
+              >
+                <Trash2 className="w-8 h-8 text-red-400" aria-hidden="true" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Delete Post?
-              </h3>
-              <p className="text-gray-500 mb-6">
-                This action cannot be undone. Your post will be permanently
-                deleted.
-              </p>
+              <h3 className="text-xl font-bold text-white mb-2">Delete Post?</h3>
+              <p className="text-slate-400 mb-6">This action cannot be undone. Your post will be permanently deleted.</p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setPostToDelete(null);
-                  }}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                  onClick={() => { setShowDeleteConfirm(false); setPostToDelete(null); }}
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDeletePost}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white flex items-center justify-center gap-2 disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}
                 >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
+                  {isDeleting ? <><Loader2 className="w-4 h-4 animate-spin" />Deleting…</> : "Delete"}
                 </button>
               </div>
             </div>
@@ -458,109 +310,152 @@ function ProfileOfotheruser() {
         </ModalWrapper>
       )}
 
-      <div className="min-h-screen bg-gray-50 py-6 sm:py-8 px-3 sm:px-4 md:ml-[260px]">
-        <div className="max-w-2xl mx-auto space-y-5 sm:space-y-6">
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
-              <div className="flex justify-center sm:justify-start">
-                <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-md">
-                  <img
-                    src="http://localhost:5000/uploads/avatar-profile-icon_188544-4755.jpg"
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
+      <div className="page-content py-8 px-4" style={{ background: "var(--bg-base)" }}>
+        {/* Background accent */}
+        <div className="fixed inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-0 right-1/3 w-[400px] h-[300px] rounded-full"
+            style={{ background: "rgba(168,85,247,0.04)", filter: "blur(80px)" }} />
+        </div>
+
+        <div className="max-w-2xl mx-auto space-y-5">
+
+          {/* ── Profile Card ── */}
+          <div className="glass-card overflow-hidden">
+            {/* Banner */}
+            <div
+              className="h-24 relative"
+              style={{
+                background: "linear-gradient(135deg, rgba(168,85,247,0.4) 0%, rgba(99,102,241,0.35) 50%, rgba(6,182,212,0.25) 100%)",
+              }}
+            >
+              <div className="absolute inset-0 opacity-20"
+                style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
+            </div>
+
+            <div className="px-5 pb-5">
+              <div className="flex items-end justify-between -mt-10 mb-4">
+                {/* Avatar */}
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-xl"
+                  style={{
+                    background: "linear-gradient(135deg, #a855f7, #6366f1)",
+                    border: "3px solid rgba(13,14,28,0.9)",
+                    boxShadow: "0 0 0 3px rgba(168,85,247,0.3)",
+                  }}
+                >
+                  {data?.username?.[0]?.toUpperCase() || "U"}
                 </div>
+
+                {/* Actions */}
+                {!isOwnProfile && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                        isFollowing ? "text-emerald-300" : "btn-primary"
+                      }`}
+                      style={isFollowing ? {
+                        background: "rgba(16,185,129,0.12)",
+                        border: "1px solid rgba(16,185,129,0.3)",
+                      } : {}}
+                    >
+                      {followLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      ) : isFollowing ? (
+                        <UserCheck className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <UserPlus className="w-4 h-4" aria-hidden="true" />
+                      )}
+                      {followLoading ? "Updating…" : isFollowing ? "Following" : "Follow"}
+                    </button>
+
+                    <button
+                      onClick={handleMessageClick}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                      style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    >
+                      <MessageCircle className="w-4 h-4" aria-hidden="true" />
+                      Message
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="flex-1 text-center sm:text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-3">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-                    {data.username}
-                  </h2>
-
-                  {!isOwnProfile && (
-                    <>
-                      <button
-                        onClick={handleFollowToggle}
-                        disabled={followLoading}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
-                          isFollowing
-                            ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
-                            : "bg-indigo-600 text-white hover:bg-indigo-700"
-                        } ${followLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-                      >
-                        {followLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : isFollowing ? (
-                          <UserCheck className="w-4 h-4" />
-                        ) : (
-                          <UserPlus className="w-4 h-4" />
-                        )}
-                        {followLoading
-                          ? "Updating"
-                          : isFollowing
-                            ? "Following"
-                            : "Follow"}
-                      </button>
-
-                      <button
-                        onClick={handleMessageClick}
-                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center justify-center gap-2"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        Message
-                      </button>
-                    </>
-                  )}
-                </div>
+              {/* Info */}
+              <div className="mb-4">
+                <h1 className="text-xl font-bold text-white mb-0.5" style={{ letterSpacing: "-0.02em" }}>
+                  {data.username}
+                </h1>
+                <p className="text-slate-400 text-sm">@{data.username}</p>
+                {data?.bio && <p className="text-slate-300 text-sm mt-2 leading-relaxed">{data.bio}</p>}
               </div>
+
+              {/* Stats */}
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { label: "Posts",     value: data?.postcount || 0, color: "text-indigo-400" },
+                  { label: "Followers", value: data?.followers  || 0, color: "text-pink-400"   },
+                  { label: "Following", value: data?.following  || 0, color: "text-emerald-400" },
+                ].map(({ label, value, color }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <Users className={`w-3.5 h-3.5 ${color}`} aria-hidden="true" />
+                    <span className="font-bold text-white text-sm" style={{ fontVariantNumeric: "tabular-nums" }}>{value}</span>
+                    <span className="text-slate-500 text-xs">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {profileError && (
+                <p className="text-red-400 text-sm mt-3">{profileError}</p>
+              )}
             </div>
           </div>
 
+          {/* ── Posts ── */}
           {data?.postcount < 1 && (
-            <div className="bg-gradient-to-r from-gray-50 to-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Grid className="w-6 h-6 text-gray-400" />
+            <div className="glass-card p-10 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(99,102,241,0.1)" }}>
+                <Sparkles className="w-7 h-7 text-indigo-400" aria-hidden="true" />
               </div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-700 mb-1">
-                No Post Found
-              </h4>
-              <p className="text-xs sm:text-sm text-gray-500">
-                This user has not posted yet.
-              </p>
+              <h3 className="text-white font-semibold mb-1">No Posts Yet</h3>
+              <p className="text-slate-500 text-sm">This user hasn't posted anything yet.</p>
             </div>
           )}
 
           {data?.postcount > 0 && (
             <>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              {/* Posts header */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <Grid className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}>
+                    <Grid className="w-4 h-4 text-white" aria-hidden="true" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-gray-800">
-                      Posts
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {data?.postcount || 0} total posts
-                    </p>
+                    <h2 className="text-base font-bold text-white">Posts</h2>
+                    <p className="text-xs text-slate-500">{data?.postcount || 0} total</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100 w-fit mx-auto sm:mx-0">
-                  <Clock className="w-4 h-4" />
-                  <span>Recent first</span>
+                <div
+                  className="flex items-center gap-1.5 text-xs text-slate-400 px-3 py-1.5 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                  Recent first
                 </div>
               </div>
-              
+
+              {/* Post list */}
               <div className="space-y-4">
                 {isOwnProfile
-                  ? posts.map((post, index) => (
-                      <div
-                        key={post._id}
-                        className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
+                  ? posts.map((post, idx) => (
+                      <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
                         <ProfilePostcard
                           post={post}
                           currentUserId={data?._id}
@@ -571,37 +466,27 @@ function ProfileOfotheruser() {
                         />
                       </div>
                     ))
-                  : posts.map((post, index) => (
-                      <div
-                        key={post._id}
-                        className="transform transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
+                  : posts.map((post, idx) => (
+                      <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
                         <PostCard post={post} IsHoveCard={false} />
                       </div>
-                    ))}
+                    ))
+                }
               </div>
 
+              {/* Infinite scroll */}
               {hasmore && (
-                <div
-                  ref={loaderRef}
-                  className="h-16 flex items-center justify-center"
-                >
-                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <div ref={loaderRef} className="h-14 flex items-center justify-center" aria-live="polite">
+                  {loadingPosts && (
+                    <div className="w-8 h-8 rounded-full animate-spin"
+                      style={{ border: "2px solid rgba(99,102,241,0.2)", borderTopColor: "#6366f1" }} />
+                  )}
                 </div>
               )}
 
               {!hasmore && posts.length > 0 && (
-                <div className="bg-gradient-to-r from-gray-50 to-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
-                  <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                    <Grid className="w-5 sm:w-6 h-5 sm:h-6 text-gray-400" />
-                  </div>
-                  <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-1">
-                    You are all caught up
-                  </h4>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    No more posts to show
-                  </p>
+                <div className="glass-card p-5 text-center">
+                  <p className="text-slate-500 text-sm">🎉 No more posts to show</p>
                 </div>
               )}
             </>

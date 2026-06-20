@@ -49,13 +49,11 @@ export const PostOfSpecifUser=async (req,res) => {
     let { cursor } = req.query;
   const userid = req.user;
  let userfindid =undefined;
-    console.log(username,cursor)
   let query = {};
   if (isValidCookieTime(cursor)) {
     query.PostAt = { $lt: new Date(cursor) };
   }
   try {
-    console.log(username);
     const find = await User.findOne({ username: username });
     if (!find) {
      return res.status(404).json({ message: "User not found" });
@@ -67,7 +65,6 @@ export const PostOfSpecifUser=async (req,res) => {
       .populate("author", "username")
       .limit(10);
       const postids = data.map((post) => post?._id);
-      console.log(data);
     let findliked = [];
     if (userid?.id) {
       findliked = await Likes.find({

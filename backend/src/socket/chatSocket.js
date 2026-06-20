@@ -72,7 +72,7 @@ const setupChatSocket = (io) => {
         });
 
       } catch (error) {
-        console.log("Socket auth error:", error.message);
+
       }
     });
 };

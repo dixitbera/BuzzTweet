@@ -4,7 +4,6 @@ export const Usernamevalidate=async (req,res) => {
     const { username } = req.body;
     const userid = req.user.id;
     try{
-        console.log("Received username for validation:", username);
         const data = await User.findById(userid, { password: 0 });
         if(data.username===username){
             return res.status(200).json({ message: "Username is available" });

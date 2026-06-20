@@ -15,9 +15,7 @@ export const UserPost=async (req,res) => {
              .sort({ PostAt: -1 })
              .populate("author", "username")
              .limit(10);
-            console.log(data)
-           const postids=data.map((post)=> post?._id);
-   
+           const postids = data.map((post) => post._id);
            let findliked=[]
            if (userid?.id) {
               findliked = await Likes.find({
@@ -46,8 +44,8 @@ export const UserPost=async (req,res) => {
            
            res.status(200).json({  dataf,hasmore,cursorb})
        } catch (error) {
-           console.log(error)
-           res.status(500).json("Server Error");
+           console.error("Error in UserPost:", error);
+           res.status(500).json({ message: "Internal server error" });
        }
        function isValidCookieTime(value) {
          if (typeof value !== "string") return false;

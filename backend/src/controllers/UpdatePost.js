@@ -2,11 +2,8 @@ import Post from "../models/Post.js";
 
 export const UpdatePost = async (req, res) => {
   try {
-    console.log("UpdatePost called with body:", req.body);
-    console.log("Authenticated user:", req.user);
     const { postid, content } = req.body;
     const post = await Post.findById(postid);
-    console.log("Post found:", post);
     if (!post) {    
         return res.status(404).json({ message: "Post not found" });
     }   

@@ -1,26 +1,23 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle } from "lucide-react";
-import { HeartFilled, HeartOutlined } from "@ant-design/icons";
+import { Heart } from "lucide-react";
+import { HeartFilled } from "@ant-design/icons";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+
 function Comment({ comm }) {
   const navigate = useNavigate();
-  const [com, setcom] = useState(comm);
+  const [com] = useState(comm);
   const [likecount, setlikecount] = useState(comm?.likecount ?? 0);
   const [loading, setLoading] = useState(false);
   const [comentliked, setcomentliked] = useState(comm?.liked);
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
+    const diffMs = Date.now() - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
@@ -36,12 +33,11 @@ function Comment({ comm }) {
     setLoading(true);
     try {
       await axios.post(
-        "http://localhost:5000/post/commentlike",
+        `${import.meta.env.VITE_API_URL}/post/commentlike`,
         { commentid: com._id },
         { withCredentials: true }
       );
-    } catch (error) {
-      console.log(error);
+    } catch {
       navigate("/login");
       setlikecount((prev) => (!c ? prev + 1 : prev - 1));
       setcomentliked(!c);
@@ -51,82 +47,59 @@ function Comment({ comm }) {
   }
 
   return (
-    <div className="group flex gap-3 py-3 px-2 hover:bg-gray-50/50 rounded-xl transition-all duration-200">
+    <div className="flex gap-2.5 py-2 group">
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-white/50">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs"
+          style={{ background: "linear-gradient(135deg, #6366f1, #a855f7)" }}
+        >
           {com?.userid?.username?.[0]?.toUpperCase() || "U"}
         </div>
       </div>
 
-      {/* Content */}
+      {/* Comment bubble */}
       <div className="flex-1 min-w-0">
-        <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100">
-          {/* Username & Time - Top Row */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-gray-900 hover:underline cursor-pointer">
-                <Link to={`/u/${com?.userid?.username}`}>
-                  {com?.userid?.username}
-                </Link>
-                
-              </span>
-              <span className="text-xs text-gray-400">·</span>
-              <span className="text-xs text-gray-400 font-medium">
-                {formatDate(com?.commentat)}
-              </span>
-            </div>
-          </div>
-
-          {/* Comment Text */}
-          <p className="text-sm text-gray-700 leading-relaxed break-words">
-            {com?.comment}
-          </p>
-        </div>
-
-        {/* Like Button - Below comment on left */}
-        {/* <button
-          disabled={loading}
-          onClick={handlecommentLike}
-          className={`flex items-center gap-1.5 mt-1.5 ml-1 text-xs font-semibold transition-all duration-200 ${
-            comentliked 
-              ? "text-red-500" 
-              : "text-gray-400 hover:text-red-500"
-          }`}
+        <div
+          className="px-3 py-2.5 rounded-2xl rounded-tl-sm"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
-          <span className={`transition-transform duration-200 ${comentliked ? "scale-110" : "group-hover:scale-110"}`}>
-            {comentliked ? (
-              <HeartFilled className="w-4 h-4" />
-            ) : (
-              <Heart className="w-4 h-4" />
-            )}
-          </span>
-          <span className={comentliked ? "font-bold" : ""}>{likecount}</span>
-        </button> */}
+          <div className="flex items-center gap-1.5 mb-1">
+            <Link
+              to={`/u/${com?.userid?.username}`}
+              className="text-xs font-semibold text-indigo-300 hover:text-indigo-200 transition-colors focus-visible:outline-none focus-visible:underline"
+            >
+              {com?.userid?.username}
+            </Link>
+            <span className="text-slate-600 text-xs">·</span>
+            <span className="text-slate-500 text-xs">{formatDate(com?.commentat)}</span>
+          </div>
+          <p className="text-sm text-slate-200 leading-relaxed break-words">{com?.comment}</p>
+        </div>
       </div>
 
-      {/* Like Count on Right Side - Alternative Display */}
-      <div className="flex-shrink-0 flex items-start pt-1">
-        <div
-          className={`flex flex-col items-center gap-0.5 transition-colors ${
-            comentliked
-              ? "text-red-500"
-              : "text-gray-300 group-hover:text-gray-400"
+      {/* Like */}
+      <div className="flex-shrink-0 flex flex-col items-center pt-1">
+        <button
+          disabled={loading}
+          onClick={handlecommentLike}
+          aria-label={comentliked ? "Unlike comment" : "Like comment"}
+          className={`p-1.5 rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+            comentliked ? "text-red-400" : "text-slate-600 hover:text-red-400 hover:bg-red-500/10"
           }`}
         >
-          <button
-            disabled={loading}
-            onClick={handlecommentLike}
-            className="p-1.5 rounded-full hover:bg-red-50 transition-all duration-200"
-          >
-            {comentliked ? (
-              <HeartFilled className="w-4 h-4" />
-            ) : (
-              <Heart className="w-4 h-4" />
-            )}
-          </button>
-          <span className="text-xs font-semibold">{likecount}</span>
-        </div>
+          {comentliked ? (
+            <HeartFilled style={{ fontSize: "14px" }} aria-hidden="true" />
+          ) : (
+            <Heart className="w-3.5 h-3.5" aria-hidden="true" />
+          )}
+        </button>
+        {likecount > 0 && (
+          <span className="text-[10px] font-semibold text-slate-500">{likecount}</span>
+        )}
       </div>
     </div>
   );

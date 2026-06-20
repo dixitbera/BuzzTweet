@@ -18,7 +18,7 @@ export const LoginUser = async (req, res) => {
       httpOnly: true, // JS cannot access
       secure: false, // true in production (HTTPS)
       sameSite: "lax", // CSRF protection
-      maxAge: 30 * 30 * 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
     res.json({
       flag: true,

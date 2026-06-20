@@ -12,7 +12,7 @@ export const Likepost=async (req,res) => {
             const cs =await Likes.deleteOne({likedby:userid,postid:postid})
             const likecount=await Post.updateOne({_id:postid},{$inc:{likeCount:-1}})
         }else{
-            const cs = await Likes.insertOne({
+            const cs = await Likes.create({
               postid: postid,
               likedby: userid
             });

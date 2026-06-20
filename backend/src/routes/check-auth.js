@@ -1,7 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middleware/Auth.js";
 import { Auth } from "../controllers/Auth.js";
-const router=express();
+const router=express.Router();
 
 router.get("/check-auth", authMiddleware,Auth);
 

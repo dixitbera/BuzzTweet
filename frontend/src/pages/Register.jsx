@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, EyeOff, UserPlus, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Alert from "../components/Alert.jsx";
 
@@ -13,17 +13,16 @@ function Register({ islogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({ username: "", email: "", password: "" });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (islogin) {
-      navigate("/");
-    }
+    setMounted(true);
+    if (islogin) navigate("/");
   }, [islogin, navigate]);
 
   const validateForm = () => {
     const newErrors = { username: "", email: "", password: "" };
     let isValid = true;
-
     if (!username.trim()) {
       newErrors.username = "Username is required";
       isValid = false;
@@ -31,7 +30,6 @@ function Register({ islogin }) {
       newErrors.username = "Username must be at least 3 characters";
       isValid = false;
     }
-
     if (!email.trim()) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -39,7 +37,6 @@ function Register({ islogin }) {
       newErrors.email = "Please enter a valid email address";
       isValid = false;
     }
-
     if (!password) {
       newErrors.password = "Password is required";
       isValid = false;
@@ -47,7 +44,6 @@ function Register({ islogin }) {
       newErrors.password = "Password must be at least 6 characters";
       isValid = false;
     }
-
     setErrors(newErrors);
     return isValid;
   };
@@ -59,51 +55,27 @@ function Register({ islogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
       });
       const data = await res.json();
-
       if (data?.flag) {
-        showToast("success", "Account created successfully! Please log in.");
-        setTimeout(() => {
-          navigate("/login");
-        }, 1500);
+        showToast("success", "Account created! Redirecting to login…");
+        setTimeout(() => navigate("/login"), 1500);
       } else {
         showToast("error", data?.message || "Registration failed. Please try again.");
       }
-    } catch (error) {
-      showToast("error", "Network error. Please check your connection and try again.");
+    } catch {
+      showToast("error", "Network error. Please check your connection.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const inputClasses = (hasError) => `
-    w-full px-4 py-3.5 
-    bg-gray-50 border-2 rounded-xl 
-    focus:ring-2 focus:ring-offset-1 
-    transition-all duration-200 ease-out
-    outline-none
-    ${hasError 
-      ? "border-red-300 focus:border-red-500 focus:ring-red-100" 
-      : "border-gray-200 focus:border-gray-900 focus:ring-gray-100"
-    }
-    placeholder-gray-400
-  `;
 
   return (
     <>
@@ -116,141 +88,172 @@ function Register({ islogin }) {
         />
       )}
 
-      <div className="min-h-screen flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-        {/* Background Pattern */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100" />
-          <div className="absolute top-0 -left-40 w-80 h-80 bg-gray-200/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -right-40 w-80 h-80 bg-gray-200/30 rounded-full blur-3xl" />
+      <div
+        className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden"
+        style={{ background: "var(--bg-base)" }}
+      >
+        {/* Animated blobs */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div
+            className="absolute -top-40 -right-40 w-96 h-96 rounded-full animate-blob"
+            style={{ background: "rgba(168,85,247,0.12)", filter: "blur(80px)" }}
+          />
+          <div
+            className="absolute bottom-0 -left-40 w-80 h-80 rounded-full animate-blob animation-delay-2000"
+            style={{ background: "rgba(99,102,241,0.10)", filter: "blur(80px)" }}
+          />
+          <div
+            className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full animate-blob animation-delay-4000"
+            style={{ background: "rgba(6,182,212,0.08)", filter: "blur(60px)" }}
+          />
+          <div className="absolute inset-0 stars-bg opacity-40" />
         </div>
 
-        <div className="w-full max-w-md">
-          {/* Logo/Brand Area */}
+        <div
+          className={`w-full max-w-md transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
+          {/* Brand */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-900 rounded-2xl mb-4 shadow-lg">
-              <UserPlus className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-              Create Account
-            </h2>
-            <p className="mt-2 text-gray-500 text-sm sm:text-base">
-              Sign up to get started with BuzzTweet
-            </p>
+            <Link to="/" className="inline-flex items-center gap-2 mb-5 group">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center animate-glow-pulse"
+                style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+              >
+                <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
+              </div>
+              <span className="text-2xl font-bold gradient-text">BuzzTweet</span>
+            </Link>
+            <h1 className="text-3xl font-bold text-white mb-2" style={{ letterSpacing: "-0.02em" }}>
+              Join BuzzTweet
+            </h1>
+            <p className="text-slate-400">Create your account and start buzzing</p>
           </div>
 
-          {/* Register Card */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Username Field */}
+          {/* Card */}
+          <div
+            className="rounded-2xl p-7 gradient-border"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+            }}
+          >
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              {/* Username */}
               <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
+                <label htmlFor="reg-username" className="block text-sm font-semibold text-slate-300 mb-2">
                   Username
                 </label>
                 <input
+                  id="reg-username"
                   type="text"
-                  id="username"
+                  name="username"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     if (errors.username) setErrors({ ...errors, username: "" });
                   }}
-                  className={inputClasses(errors.username)}
-                  placeholder="Choose a username"
                   autoComplete="username"
+                  spellCheck={false}
+                  placeholder="Choose a username…"
+                  className={`glass-input w-full px-4 py-3.5 rounded-xl text-sm text-white ${
+                    errors.username ? "border-red-500/60" : ""
+                  }`}
+                  aria-invalid={!!errors.username}
+                  aria-describedby={errors.username ? "reg-username-error" : undefined}
                 />
                 {errors.username && (
-                  <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+                  <p id="reg-username-error" className="mt-1.5 text-xs text-red-400" role="alert">
                     {errors.username}
                   </p>
                 )}
               </div>
 
-              {/* Email Field */}
+              {/* Email */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
+                <label htmlFor="reg-email" className="block text-sm font-semibold text-slate-300 mb-2">
                   Email
                 </label>
                 <input
+                  id="reg-email"
                   type="email"
-                  id="email"
+                  name="email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: "" });
                   }}
-                  className={inputClasses(errors.email)}
-                  placeholder="Enter your email"
                   autoComplete="email"
+                  spellCheck={false}
+                  placeholder="your@email.com"
+                  className={`glass-input w-full px-4 py-3.5 rounded-xl text-sm text-white ${
+                    errors.email ? "border-red-500/60" : ""
+                  }`}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "reg-email-error" : undefined}
                 />
                 {errors.email && (
-                  <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+                  <p id="reg-email-error" className="mt-1.5 text-xs text-red-400" role="alert">
                     {errors.email}
                   </p>
                 )}
               </div>
 
-              {/* Password Field */}
+              {/* Password */}
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
+                <label htmlFor="reg-password" className="block text-sm font-semibold text-slate-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <input
+                    id="reg-password"
                     type={showPassword ? "text" : "password"}
-                    id="password"
+                    name="new-password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (errors.password) setErrors({ ...errors, password: "" });
                     }}
-                    className={`${inputClasses(errors.password)} pr-12`}
-                    placeholder="Create a password"
                     autoComplete="new-password"
+                    placeholder="Create a strong password…"
+                    className={`glass-input w-full px-4 py-3.5 pr-12 rounded-xl text-sm text-white ${
+                      errors.password ? "border-red-500/60" : ""
+                    }`}
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "reg-password-error" : undefined}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
                     aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+                  <p id="reg-password-error" className="mt-1.5 text-xs text-red-400" role="alert">
                     {errors.password}
                   </p>
                 )}
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <button
+                id="register-submit"
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3.5 px-6 rounded-xl font-semibold text-base hover:bg-gray-800 focus:ring-4 focus:ring-gray-200 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/30 active:scale-[0.98]"
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Creating account...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    Creating account…
                   </>
                 ) : (
                   <>
-                    <UserPlus className="w-5 h-5" />
-                    <span>Sign Up</span>
+                    Create Account
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </>
                 )}
               </button>
@@ -259,31 +262,28 @@ function Register({ islogin }) {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-400">or</span>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 text-slate-500" style={{ background: "rgba(13,14,28,0.97)" }}>
+                  or
+                </span>
               </div>
             </div>
 
-            {/* Login Link */}
-            <p className="text-center text-sm sm:text-base text-gray-500">
+            <p className="text-center text-sm text-slate-400">
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="font-semibold text-gray-900 hover:text-gray-700 transition-colors inline-flex items-center gap-1"
+                className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors focus-visible:outline-none focus-visible:underline"
               >
-                Log in
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                Sign in
               </Link>
             </p>
           </div>
 
-          {/* Footer Text */}
-          <p className="text-center mt-6 text-xs text-gray-400">
-            By signing up, you agree to our Terms of Service and Privacy Policy
+          <p className="text-center mt-5 text-xs text-slate-600">
+            By signing up, you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>
       </div>

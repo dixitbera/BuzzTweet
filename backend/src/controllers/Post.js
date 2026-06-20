@@ -47,8 +47,6 @@ export const Postf = async (req, res) => {
         
         res.status(200).json({  dataf,hasmore,cursorb})
     } catch (error) {
-        console.log(error)
-        res.status(500).json("Server Error");
     }
     function isValidCookieTime(value) {
       if (typeof value !== "string") return false;

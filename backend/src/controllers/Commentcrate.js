@@ -5,7 +5,7 @@ export const Commentcrate=async (req,res)=>{
     const {postid,commentText} =req.body;
     const userID=req.user.id;
     try {
-        const submit = await comment.insertOne({
+        const submit = await comment.create({
           postid: postid,
           userid: userID,
           comment: commentText,
@@ -16,6 +16,6 @@ export const Commentcrate=async (req,res)=>{
         );
           res.status(200).json({ flag: true, msg: "success" });
     } catch (error) {
-        res.status(200).json("Internal Serever Error");
+        res.status(500).json("Internal Server Error");
     }
 }

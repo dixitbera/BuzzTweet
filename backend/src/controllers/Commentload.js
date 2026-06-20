@@ -5,7 +5,6 @@ import CommentLike from "../models/CommentLike.js";
    const { postid, cursor } = req.query;
    const userid=req.user ;
     let query = { postid: postid };
-  console.log(cursor)
    try {
       if (cursor) {
         query.commentat = { $lt: new Date(cursor) };
@@ -28,9 +27,7 @@ import CommentLike from "../models/CommentLike.js";
               }))
         }
       res.json({ newcomm, setcursor ,hasmore});
-    //  console.log(commdata);
    } catch (error) {
-     console.log(error)
    }
     function isValidCookieTime(value) {
       if (typeof value !== "string") return false;

@@ -11,7 +11,7 @@ export const Createpost = async (req,res) => {
         query.image=filename;
     }
     try {
-        const postsub = await Post.insertOne(query);
+        const postsub = await Post.create(query);
         const updatePostCount=await User.updateOne({_id:userid},{$inc:{postcount:1 }})
         res.status(200).json({ flag: true, msg: "success" });
     } catch (error) {

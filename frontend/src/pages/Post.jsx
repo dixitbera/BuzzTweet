@@ -196,7 +196,7 @@ function Post({ islogin, id, toast }) {
             </div>
 
             {/* Input row */}
-            <div className="relative flex gap-2">
+            <div className="relative flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={aiPrompt}
@@ -204,7 +204,7 @@ function Post({ islogin, id, toast }) {
                 onKeyDown={(e) => e.key === "Enter" && !aiGenerating && handleGenerate()}
                 placeholder="e.g. motivation, tech news, travel tips…"
                 aria-label="AI post prompt"
-                className="flex-1 px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
+                className="w-full sm:flex-1 px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
                 style={{
                   background: "rgba(255,255,255,0.12)",
                   border: "1px solid rgba(255,255,255,0.2)",
@@ -217,7 +217,7 @@ function Post({ islogin, id, toast }) {
                 onClick={handleGenerate}
                 disabled={aiGenerating || !aiPrompt.trim()}
                 aria-label="Generate AI post"
-                className="flex items-center gap-2 bg-white text-indigo-700 font-semibold px-5 py-3 rounded-xl hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-lg text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-5 py-3 rounded-xl hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-lg text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white w-full sm:w-auto"
               >
                 {aiGenerating ? (
                   <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />Generating…</>

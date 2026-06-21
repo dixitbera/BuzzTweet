@@ -12,25 +12,25 @@ import Alert from "../components/Alert.jsx";
 import ModalWrapper from "../components/ModalWrapper.jsx";
 
 function ProfileOfotheruser() {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const { username } = useParams();
 
-  const [data,               setData]               = useState(null);
-  const [posts,              setPosts]              = useState([]);
-  const [hasmore,            setHasmore]            = useState(true);
-  const [loadingPosts,       setLoadingPosts]       = useState(false);
-  const [cursor,             setCursor]             = useState(undefined);
-  const [profileLoading,     setProfileLoading]     = useState(true);
-  const [profileNotFound,    setProfileNotFound]    = useState(false);
-  const [profileError,       setProfileError]       = useState("");
-  const [isFollowing,        setIsFollowing]        = useState(false);
-  const [isOwnProfile,       setIsOwnProfile]       = useState(false);
-  const [followLoading,      setFollowLoading]      = useState(false);
-  const [showDeleteConfirm,  setShowDeleteConfirm]  = useState(false);
-  const [postToDelete,       setPostToDelete]       = useState(null);
-  const [isDeleting,         setIsDeleting]         = useState(false);
-  const [showToast,          setShowToast]          = useState(false);
-  const [toastConfig,        setToastConfig]        = useState({ type: "", message: "" });
+  const [data, setData] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [hasmore, setHasmore] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [cursor, setCursor] = useState(undefined);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileNotFound, setProfileNotFound] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastConfig, setToastConfig] = useState({ type: "", message: "" });
   const loaderRef = useRef(null);
 
   async function fetchPost(nextCursor = undefined, targetUsername = username, ignore = false) {
@@ -60,7 +60,7 @@ function ProfileOfotheruser() {
   async function fetchFollowStatus(targetUsername, ignore = false) {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/u/${targetUsername}/follow-status`,
+        `${import.meta.env.VITE_API_URL}/api/u/${targetUsername}/follow-status`,
         { withCredentials: true },
       );
       if (ignore) return;
@@ -79,7 +79,7 @@ function ProfileOfotheruser() {
       setData(null); setPosts([]); setHasmore(true); setCursor(undefined);
       setIsFollowing(false); setIsOwnProfile(false);
       try {
-        const profileResponse = await axios.get(`http://localhost:5000/api/u/${username}`, { withCredentials: true });
+        const profileResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/u/${username}`, { withCredentials: true });
         if (ignore) return;
         const profileData = profileResponse.data;
         setData(profileData);
@@ -147,10 +147,10 @@ function ProfileOfotheruser() {
     setFollowLoading(true); setProfileError("");
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/u/${username}/follow`,
+        `${import.meta.env.VITE_API_URL}/api/u/${username}/follow`,
         { follow: nextFollowState }, { withCredentials: true },
       );
-      const nextStatus        = Boolean(response?.data?.isFollowing);
+      const nextStatus = Boolean(response?.data?.isFollowing);
       const nextFollowersCount = Number(response?.data?.followers);
       setIsFollowing(nextStatus);
       setData((prev) => {
@@ -352,9 +352,8 @@ function ProfileOfotheruser() {
                     <button
                       onClick={handleFollowToggle}
                       disabled={followLoading}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                        isFollowing ? "text-emerald-300" : "btn-primary"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isFollowing ? "text-emerald-300" : "btn-primary"
+                        }`}
                       style={isFollowing ? {
                         background: "rgba(16,185,129,0.12)",
                         border: "1px solid rgba(16,185,129,0.3)",
@@ -394,9 +393,9 @@ function ProfileOfotheruser() {
               {/* Stats */}
               <div className="flex flex-wrap gap-3">
                 {[
-                  { label: "Posts",     value: data?.postcount || 0, color: "text-indigo-400" },
-                  { label: "Followers", value: data?.followers  || 0, color: "text-pink-400"   },
-                  { label: "Following", value: data?.following  || 0, color: "text-emerald-400" },
+                  { label: "Posts", value: data?.postcount || 0, color: "text-indigo-400" },
+                  { label: "Followers", value: data?.followers || 0, color: "text-pink-400" },
+                  { label: "Following", value: data?.following || 0, color: "text-emerald-400" },
                 ].map(({ label, value, color }) => (
                   <div
                     key={label}
@@ -455,22 +454,22 @@ function ProfileOfotheruser() {
               <div className="space-y-4">
                 {isOwnProfile
                   ? posts.map((post, idx) => (
-                      <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
-                        <ProfilePostcard
-                          post={post}
-                          currentUserId={data?._id}
-                          onPostUpdate={handlePostUpdate}
-                          onPostDelete={handlePostDelete}
-                          onShowToast={handleShowToast}
-                          onDeleteRequest={handleDeleteRequest}
-                        />
-                      </div>
-                    ))
+                    <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
+                      <ProfilePostcard
+                        post={post}
+                        currentUserId={data?._id}
+                        onPostUpdate={handlePostUpdate}
+                        onPostDelete={handlePostDelete}
+                        onShowToast={handleShowToast}
+                        onDeleteRequest={handleDeleteRequest}
+                      />
+                    </div>
+                  ))
                   : posts.map((post, idx) => (
-                      <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
-                        <PostCard post={post} IsHoveCard={false} />
-                      </div>
-                    ))
+                    <div key={post._id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
+                      <PostCard post={post} IsHoveCard={false} />
+                    </div>
+                  ))
                 }
               </div>
 

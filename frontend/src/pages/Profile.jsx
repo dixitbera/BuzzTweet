@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Grid, Clock, Users, UserPlus, Loader2, Settings, Sparkles } from "lucide-react";
+import { Grid, Clock, Users, UserPlus, Loader2, Settings, Sparkles, LogOut } from "lucide-react";
 import Profilesetting from "../components/Profilesetting.jsx";
 import ProfilePostcard from "../components/ProfilePostcard.jsx";
 import Alert from "../components/Alert.jsx";
@@ -306,6 +306,25 @@ function Profile({ toast }) {
               )}
             </>
           )}
+
+          {/* ── Mobile Logout Button ───────────────────────────────── */}
+          <div className="md:hidden pt-4 pb-8">
+            <button
+              onClick={async () => {
+                await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
+                  method: "POST",
+                  credentials: "include",
+                });
+                window.location.href = "/login";
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-red-400 font-semibold transition-all hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}
+            >
+              <LogOut className="w-5 h-5" aria-hidden="true" />
+              Log Out
+            </button>
+          </div>
+
         </div>
       </div>
     </>

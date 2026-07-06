@@ -15,7 +15,8 @@ export const Createpost = async (req,res) => {
         const updatePostCount=await User.updateOne({_id:userid},{$inc:{postcount:1 }})
         res.status(200).json({ flag: true, msg: "success" });
     } catch (error) {
-        res.status(500).json({msg:"sdf"})
+        console.error("Error creating post:", error);
+        res.status(500).json({ message: "Failed to create post" })
     }
     
 }   

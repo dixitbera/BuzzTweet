@@ -1,6 +1,9 @@
 import User from "../models/User.js";
 import bcrypt, { compare } from "bcrypt";
 import jwt from "jsonwebtoken";
+
+const isProduction = process.env.NODE_ENV === "production";
+
 export const LoginUser = async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -15,9 +18,9 @@ export const LoginUser = async (req, res) => {
       expiresIn: "1h",
     });
     res.cookie("token", token, {
-      httpOnly: true, // JS cannot access
-      secure: false, // true in production (HTTPS)
-      sameSite: "lax", // CSRF protection
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
     res.json({
@@ -25,6 +28,7 @@ export const LoginUser = async (req, res) => {
       message: "Login success",
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.json({ flag: false, message: "Fail" });
   }
 }

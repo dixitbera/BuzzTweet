@@ -28,6 +28,8 @@ import CommentLike from "../models/CommentLike.js";
         }
       res.json({ newcomm, setcursor ,hasmore});
    } catch (error) {
+      console.error("Error loading comments:", error);
+      res.status(500).json({ message: "Internal Server Error" });
    }
     function isValidCookieTime(value) {
       if (typeof value !== "string") return false;

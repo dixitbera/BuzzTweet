@@ -22,8 +22,9 @@ export const comlike=async (req,res)=>{
                           {$inc: { likecount: 1 }
                         });
                 }
-                res.json({msg:"Done Bhai"})
+                res.status(200).json({ message: "Comment like toggled" })
         } catch (error) {
-                res.json({ msg: "Nahi Ho Raha Bhai" });
+                console.error("Comment like error:", error);
+                res.status(500).json({ message: "Internal Server Error" });
         }
 }

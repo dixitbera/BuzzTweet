@@ -31,9 +31,10 @@ const server = http.createServer(app);
 const isProduction = process.env.NODE_ENV === "production";
 
 // Allowed origins for CORS
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((s) => s.trim())
-  : ["http://localhost:5173"];
+// const allowedOrigins = 
+// process.env.FRONTEND_URL
+//   ? process.env.FRONTEND_URL.split(",").map((s) => s.trim())
+//   : ["http://localhost:5173"];
 
 // Create socket server
 const io = new Server(server, {
@@ -46,7 +47,7 @@ setupChatSocket(io);
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: "*",
     credentials: true,
   })
 );

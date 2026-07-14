@@ -39,7 +39,7 @@ const isProduction = process.env.NODE_ENV === "production";
 // Create socket server
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: "*",
     credentials: true,
   },
 });

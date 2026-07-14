@@ -30,6 +30,7 @@ const server = http.createServer(app);
 
 const isProduction = process.env.NODE_ENV === "production";
 
+
 // Allowed origins for CORS
 // const allowedOrigins = 
 // process.env.FRONTEND_URL
@@ -39,7 +40,7 @@ const isProduction = process.env.NODE_ENV === "production";
 // Create socket server
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: true,
     credentials: true,
   },
 });
@@ -47,7 +48,7 @@ setupChatSocket(io);
 
 app.use(
   cors({
-    origin: "*",
+    origin: true,
     credentials: true,
   })
 );
